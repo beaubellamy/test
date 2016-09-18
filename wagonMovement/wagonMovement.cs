@@ -6,11 +6,16 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
+Microsoft.Office.Interop.Excel.Application oXL;
+Microsoft.Office.Interop.Excel._Workbook oWB;
+Microsoft.Office.Interop.Excel._Worksheet oSheet;
+Microsoft.Office.Interop.Excel.Range oRng;
+object misvalue = System.Reflection.Missing.Value;
 
 
 namespace wagonMovement
 {
-
+    
     class Program
     {
 
@@ -36,7 +41,7 @@ namespace wagonMovement
             double netWeight;
 
             // constructor for all relevant fields
-            wagonDetails(wagonDetails wagon)
+            public wagonDetails(wagonDetails wagon)
             {
                 this.wagonID = wagon.wagonID;
                 this.origin = wagon.origin;
@@ -46,8 +51,8 @@ namespace wagonMovement
                 this.detachmentTime = wagon.detachmentTime;
                 this.netWeight = wagon.netWeight;
             }
-
-            wagonDetails(string wagonID, string origin, string plannedDestination, string destination, double netWeight)
+            
+            public wagonDetails(string wagonID, string origin, string plannedDestination, string destination, double netWeight)
             {
                 this.wagonID = wagonID;
                 this.origin = origin;
@@ -58,7 +63,7 @@ namespace wagonMovement
                 this.netWeight = netWeight;
             }
 
-            wagonDetails(string wagonID, string origin, string plannedDestination, string destination, DateTime attachmentTime, DateTime detachmentTime, double netWeight)
+            public wagonDetails(string wagonID, string origin, string plannedDestination, string destination, DateTime attachmentTime, DateTime detachmentTime, double netWeight)
             {
                 this.wagonID = wagonID;
                 this.origin = origin;
@@ -68,8 +73,9 @@ namespace wagonMovement
                 this.detachmentTime = detachmentTime;
                 this.netWeight = netWeight;
             }
-
-        };
+            
+        }
+        
 
         static void Main(string[] args)
         {
@@ -77,7 +83,8 @@ namespace wagonMovement
             // Obtain file from dialogue.
 
             //string path = @"S:\Corporate Strategy\Market Analysis & Forecasts\Volume\Wagon movement analysis\";
-            string path = @"C:\Users\bbel1\Documents";
+            //string path = @"C:\Users\bbel1\Documents";
+            string path = @"C:\Users\Beau\Documents\ARTC\Wagon Volumes";      // Home file location.
             string file = @"\2015-16 FY Freight volumes test.txt";
             string filename = path + file;
 
@@ -107,7 +114,15 @@ namespace wagonMovement
              * 15 - Wagon Movement Count (smae as ID)
              */
             List<wagonDetails> wagon = new List<wagonDetails>();
+            //wagonDetails wagonData = new wagonDetails();
+
             
+            Microsoft.Office.Interop.Excel.Application oXL;
+            //Microsoft.Office.Interop.Excel._Workbook oWB;
+            //Microsoft.Office.Interop.Excel._Worksheet oSheet;
+            //Microsoft.Office.Interop.Excel.Range oRng;
+            //object misvalue = System.Reflection.Missing.Value;
+
 
             /* Read the text file */
             string[] lines = System.IO.File.ReadAllLines(filename);
@@ -121,7 +136,6 @@ namespace wagonMovement
             /* Populate the wagonDetails array */
             foreach (string line in lines)
             {
-
                 
                 //string record = line;
                 string[] fields = line.Split(delimiters);
@@ -164,14 +178,13 @@ namespace wagonMovement
 
                 DateTime.TryParse(fields[8], out attachmentTime);
                 DateTime.TryParse(fields[9], out detachmentTime);
-                double.TryParse(fields[11], out tareWeight);
-                double.TryParse(fields[10], out grossWeight);
+                double.TryParse(fields[10], out tareWeight);
+                double.TryParse(fields[11], out grossWeight);
                 netWeight = grossWeight - tareWeight;
 
-                //wagonDetails wagonData = new wagonDetails();
+                wagonDetails data = new wagonDetails(wagonID, origin, plannedDestination, destination, attachmentTime, detachmentTime, netWeight);
+                wagon.Add(data);
 
-                //wagon.Add(wagonID, origin, plannedDestination, destination, attachmentTime, detachmentTime, netWeight);
-                
             }
 
             
