@@ -75,7 +75,7 @@ namespace wagonMovement
         static void Main(string[] args)
         {
 
-            // Obtain file from dialogue.
+            // TODO: Obtain file from dialogue.
 
             //string path = @"S:\Corporate Strategy\Market Analysis & Forecasts\Volume\Wagon movement analysis\";
             //string path = @"C:\Users\bbel1\Documents";
@@ -130,7 +130,9 @@ namespace wagonMovement
          */
         public static List<wagonDetails> readWagonDataFile(string filename)
         {
-        
+            // TODO: validate the file contents
+            // ie. number of fields, string, double, etc
+
             /* Read the all lines of the text file. */
             string[] lines = System.IO.File.ReadAllLines(filename);
             char[] delimiters = {','};
@@ -277,6 +279,7 @@ namespace wagonMovement
             worksheet.get_Range("G2", "G" + wagon.Count).Value2 = weight;
             
             string savePath = @"C:\Users\Beau\Documents\ARTC\Wagon Volumes";    // home path
+            // TODO: Create a filename based on current date.
             string saveFilename = savePath + @"\wagonDetails.xlsx";
 
             /* Check the file does not exist yet. */
