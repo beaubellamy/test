@@ -1,4 +1,14 @@
-﻿using System;
+﻿/*
+ * Wagon Movement class
+ * 
+ */
+
+
+//----------------------------------------
+// Uncomment to turn logging on 
+//#define LOGGING 
+//---------------------------------------
+using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,6 +22,9 @@ namespace wagonMovement
     class Program
     {
 
+        /// <summary>
+        /// A class to hold the journey characterstics of the volume.
+        /// </summary>
         public class volumeMovement
         {
             string wagonID;
@@ -23,6 +36,9 @@ namespace wagonMovement
 
         };
 
+        /// <summary>
+        /// A class to hold the wagon Characteristics for each wagon journey.
+        /// </summary>
         public class wagonDetails
         {
             
@@ -34,7 +50,10 @@ namespace wagonMovement
             public DateTime detachmentTime;
             public double netWeight;
             
-            /* Constructor for all relevant fields */
+            /// <summary>
+            /// Default Wagon Constrcutor.
+            /// </summary>
+            /// <param name="wagon">Wagon structure containing the origin, destination and volume carries among other properties.</param>
             public wagonDetails(wagonDetails wagon)
             {
                 this.wagonID = wagon.wagonID;
@@ -46,6 +65,14 @@ namespace wagonMovement
                 this.netWeight = wagon.netWeight;
             }
             
+            /// <summary>
+            /// Wagon Constructor.
+            /// </summary>
+            /// <param name="wagonID">The Wagon class ID.</param>
+            /// <param name="origin">The Origin location code of the wagon.</param>
+            /// <param name="plannedDestination">The planned destination code of the wagon.</param>
+            /// <param name="destination">The destination code of the wagon.</param>
+            /// <param name="netWeight">The net weight carried to the destination by the wagon.</param>
             public wagonDetails(string wagonID, string origin, string plannedDestination, string destination, double netWeight)
             {
                 this.wagonID = wagonID;
@@ -56,7 +83,17 @@ namespace wagonMovement
                 this.detachmentTime = new DateTime(2000, 1, 1);
                 this.netWeight = netWeight;
             }
-
+            
+            /// <summary>
+            /// Wagon Constructor.
+            /// </summary>
+            /// <param name="wagonID">The Wagon class ID.</param>
+            /// <param name="origin">The Origin location code of the wagon.</param>
+            /// <param name="plannedDestination">The planned destination code of the wagon.</param>
+            /// <param name="destination">The destination code of the wagon.</param>
+            /// <param name="attachmentTime">The time the wagon was attached to the Train.</param>
+            /// <param name="detachmentTime">The time the wagon was detached from the Train.</param>
+            /// <param name="netWeight">The net weight carried to the destination by the wagon.</param>
             public wagonDetails(string wagonID, string origin, string plannedDestination, string destination, DateTime attachmentTime, DateTime detachmentTime, double netWeight)
             {
                 this.wagonID = wagonID;
@@ -67,18 +104,26 @@ namespace wagonMovement
                 this.detachmentTime = detachmentTime;
                 this.netWeight = netWeight;
             }
-
-           
+                       
         }
-        
 
+        /// <summary>
+        /// Instantiation of the Log Class to provide logging capability.
+        /// </summary>
+#if (LOGGING)
+        public static Logging log = new Logging();
+#endif
+      
         static void Main(string[] args)
         {
+            
+            #if (LOGGING)
+                log.WriteLine("Begin:");
+            #endif
 
             // TODO: Obtain file from dialogue.
 
             //string path = @"S:\Corporate Strategy\Market Analysis & Forecasts\Volume\Wagon movement analysis\";
-            //string path = @"C:\Users\bbel1\Documents";
             string path = @"C:\Users\Beau\Documents\ARTC\Wagon Volumes";      // Home file location.
             string file = @"\2015-16 FY Freight volumes test.txt";
             string filename = path + file;
@@ -90,27 +135,10 @@ namespace wagonMovement
                 return;
             }
 
-            /* Structure of the volume data:
-             * 0 - Wagon Class
-             * 1 - Wagon Number
-             * 2 - Train Number
-             * 3 - Train Date
-             * 4 - Comodity
-             * 5 - Origin Code
-             * 6 - Planned Destination Code
-             * 7 - Actual Destination Code
-             * 8 - Attachment Time
-             * 9 - Detachment Time
-             * 10 - Tare Weight
-             * 11 - Gross Weight
-             * 12 - Distance Travelled
-             * 13 - Wagon Sequence
-             * 14 - Record ID
-             * 15 - Wagon Movement Count (smae as ID)
-             */
+            /* Create the Wagon list. */
             List<wagonDetails> wagon = new List<wagonDetails>();
-            
-            // Create a wagon object list from the wagon movement text file.
+
+            /* Populte the wagon list with the data from the data file. */
             wagon = readWagonDataFile(filename);
 
 
@@ -119,15 +147,36 @@ namespace wagonMovement
              */
 
 
-            // Write the wagon details to excel.
+            /* Write the wagon details to excel. */
             writeToExcel(wagon);
             
 
         }
         
-        /*
-         * Read the wagon movement data from the text file.
-         */
+ 
+        /// <summary>
+        /// Read the wagon data file.
+        /// The file is assumed to be in a specific format
+        /// column  Feild
+        ///  0      Wagon Class
+        ///  1      Wagon Number
+        ///  2      Train Number
+        ///  3      Train Date
+        ///  4      Comodity
+        ///  5      Origin Code
+        ///  6      Planned Destination Code
+        ///  7      Actual Destination Code
+        ///  8      Attachment Time
+        ///  9      Detachment Time
+        ///  10     Tare Weight
+        ///  11     Gross Weight
+        ///  12     Distance Travelled
+        ///  13     Wagon Sequence
+        ///  14     Record ID
+        ///  15     Wagon Movement Count (same as ID)
+        /// </summary>
+        /// <param name="filename">The wagon data file.</param>
+        /// <returns></returns>
         public static List<wagonDetails> readWagonDataFile(string filename)
         {
             // TODO: validate the file contents
@@ -213,12 +262,14 @@ namespace wagonMovement
                 // TODO:
                 // Clean the data - validate - function.
                 // Check against known issues
-
+                
                 /* Construct the wagon object and add to the list. */
+                // if (valid)
                 wagonDetails data = new wagonDetails(wagonID, origin, plannedDestination, destination, attachmentTime, detachmentTime, netWeight);
                 wagon.Add(data);
 
             }
+            
             /* Return the completed wagon List. */
             return wagon;
         }
@@ -226,11 +277,13 @@ namespace wagonMovement
         /*
          * Write the wagon movement details to excel for analysis.
          */
+        /// <summary>
+        /// Write the wagon details to an excel file for later analysis.
+        /// </summary>
+        /// <param name="wagon">The wagon object containing the origin, destinaiton and net weight</param>
         public static void writeToExcel(List<wagonDetails> wagon)
         {
-            /* May need the PIA for Excel references.
-             * https://msdn.microsoft.com/en-us/library/kh3965hw(v=vs.100).aspx
-             */
+            
             /* Create the microsfot excel references. */
             Microsoft.Office.Interop.Excel.Application excel;
             Microsoft.Office.Interop.Excel._Workbook workbook;
@@ -244,7 +297,8 @@ namespace wagonMovement
             worksheet = (Microsoft.Office.Interop.Excel._Worksheet)workbook.ActiveSheet;
 
             /* Create the header details. */
-            string[] header = { "Wagon ID", "Origin", "Planned Destiantion", "Destination", "Attatchment Time", "Detatchment Time", "Net Weight" };
+            string[] header = { "Wagon ID", "Origin", "Planned Destiantion", "Destination", 
+                                  "Attatchment Time", "Detatchment Time", "Net Weight" };
             worksheet.get_Range("A1", "G1").Value2 = header;
 
             /* Deconstruct the wagon details into excel columns. */
@@ -278,6 +332,7 @@ namespace wagonMovement
             worksheet.get_Range("F2", "F" + wagon.Count).Value2 = detatch;
             worksheet.get_Range("G2", "G" + wagon.Count).Value2 = weight;
             
+            //string savePath = @"S:\Corporate Strategy\Market Analysis & Forecasts\Volume\Wagon movement analysis";
             string savePath = @"C:\Users\Beau\Documents\ARTC\Wagon Volumes";    // home path
             // TODO: Create a filename based on current date.
             string saveFilename = savePath + @"\wagonDetails.xlsx";
@@ -293,9 +348,10 @@ namespace wagonMovement
                 Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing);
 
             workbook.Close();
+
             return;
         }
 
-    }
+    } // end of program class
 
-}
+} // end of namespace
