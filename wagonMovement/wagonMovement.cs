@@ -15,10 +15,11 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace wagonMovement
 {
-    
+
     class Program
     {
 
@@ -41,7 +42,7 @@ namespace wagonMovement
         /// </summary>
         public class wagonDetails
         {
-            
+
             public string wagonID;
             public string origin;
             public string plannedDestination;
@@ -49,7 +50,7 @@ namespace wagonMovement
             public DateTime attachmentTime;
             public DateTime detachmentTime;
             public double netWeight;
-            
+
             /// <summary>
             /// Default Wagon Constrcutor.
             /// </summary>
@@ -64,7 +65,7 @@ namespace wagonMovement
                 this.detachmentTime = wagon.detachmentTime;
                 this.netWeight = wagon.netWeight;
             }
-            
+
             /// <summary>
             /// Wagon Constructor.
             /// </summary>
@@ -83,7 +84,7 @@ namespace wagonMovement
                 this.detachmentTime = new DateTime(2000, 1, 1);
                 this.netWeight = netWeight;
             }
-            
+
             /// <summary>
             /// Wagon Constructor.
             /// </summary>
@@ -104,7 +105,7 @@ namespace wagonMovement
                 this.detachmentTime = detachmentTime;
                 this.netWeight = netWeight;
             }
-                       
+
         }
 
         /// <summary>
@@ -113,25 +114,27 @@ namespace wagonMovement
 #if (LOGGING)
         public static Logging log = new Logging();
 #endif
-      
+        /* Create a tools Object. */
+        public static Tools tool = new Tools();
+
+        [STAThread]
         static void Main(string[] args)
         {
-            
-            #if (LOGGING)
+
+#if (LOGGING)
                 log.WriteLine("Begin:");
-            #endif
+#endif
 
-            // TODO: Obtain file from dialogue.
-
-            //string path = @"S:\Corporate Strategy\Market Analysis & Forecasts\Volume\Wagon movement analysis\";
-            string path = @"C:\Users\Beau\Documents\ARTC\Wagon Volumes";      // Home file location.
-            string file = @"\2015-16 FY Freight volumes test.txt";
-            string filename = path + file;
-
-            // This will be redundant when the file is obtained from the dialogue box.
-            if (!File.Exists(filename))
+            /* Use a browser to select the desired data file. */
+            string filename = null;
+            try
             {
-                Console.WriteLine(filename+" does not exist. Check spelling and location.");
+                filename = tool.selectDataFile();
+                if (filename == null)
+                    return;
+            }
+            catch
+            {
                 return;
             }
 
@@ -139,8 +142,18 @@ namespace wagonMovement
             List<wagonDetails> wagon = new List<wagonDetails>();
 
             /* Populte the wagon list with the data from the data file. */
-            wagon = readWagonDataFile(filename);
-
+            try
+            {
+                wagon = readWagonDataFile(filename);
+            }
+            catch (IOException exception)
+            {
+                if (wagon.Count() == 0)
+                {
+                    tool.messageBox(exception.Message, "File format.");
+                    return;
+                }
+            }
 
             /*
              * wagon movement algorithms ...
@@ -149,11 +162,11 @@ namespace wagonMovement
 
             /* Write the wagon details to excel. */
             writeToExcel(wagon);
-            
+
 
         }
-        
- 
+
+
         /// <summary>
         /// Read the wagon data file.
         /// The file is assumed to be in a specific format
@@ -176,28 +189,36 @@ namespace wagonMovement
         ///  15     Wagon Movement Count (same as ID)
         /// </summary>
         /// <param name="filename">The wagon data file.</param>
-        /// <returns></returns>
+        /// <returns>The list of wagon objects.</returns>
         public static List<wagonDetails> readWagonDataFile(string filename)
         {
-            // TODO: validate the file contents
-            // ie. number of fields, string, double, etc
-
+           
             /* Read the all lines of the text file. */
             string[] lines = System.IO.File.ReadAllLines(filename);
-            char[] delimiters = {','};
+            char[] delimiters = { ',' };
 
             double tareWeight = 0;
             double grossWeight = 0;
-            DateTime attachmentTime = new DateTime(2000,1,1);
+            DateTime attachmentTime = new DateTime(2000, 1, 1);
             DateTime detachmentTime = new DateTime(2000, 1, 1);
 
             /* Create the list of wagon objects. */
             List<wagonDetails> wagon = new List<wagonDetails>();
 
+            /* Validate the format of the first line of the file. */
+            // This can not be header information.
+            Boolean validFormat = false;
+            string[] fields = lines[0].Split(delimiters);
+            validFormat = tool.validateFileFormat(fields);
+            if (!validFormat)
+            {
+                /* The file format is invalid, return the empty wagon object. */
+                throw new IOException("Data file has an invalid format.");
+            }
+
             /* Extract the wagon details from the data file. */
             foreach (string line in lines)
             {
-                
                 string wagonID = "";
                 string origin = "";
                 string plannedDestination = "";
@@ -205,52 +226,41 @@ namespace wagonMovement
                 double netWeight = 0;
 
                 /* Split the lines into the fields */
-                string[] fields = line.Split(delimiters);
-                char [] newDelimeters = {'\'','"'};
-
-                /* Check the number of fields */
-                if (fields.Count() != 16)
-                {
-                    Console.WriteLine("Incorrect number of fields detected in text file.");
-                    Console.WriteLine("Press enter to close...");
-                    Console.ReadLine();
-                    // Return empty wagon list.
-                    return wagon;       
-                }
+                fields = line.Split(delimiters);
+                char[] newDelimeters = { '\'', '"' };
 
                 /* Clean the wagon ID fields. */
                 string[] field0 = Regex.Unescape(fields[0]).Split(newDelimeters);
                 string[] field1 = Regex.Unescape(fields[1]).Split(newDelimeters);
-                
-                /*
-                 * Extract the cleaned fields and populate the wagon detail arrays.
-                 */
+
+                /* Extract the cleaned fields and populate the wagon detail arrays. */
+
                 /* Wagon ID. */
                 if (field0.Count() == 3 && field1.Count() == 1)
                     wagonID = field0[1] + "-" + field1[0];
                 else
-                    Console.WriteLine("Wagon ID configuration has not been accounted for.");
+                    tool.messageBox("Wagon ID configuration has not been accounted for.", "Unknown wagon ID configuration.");
 
                 /* Wagon Origin. */
                 string[] field = Regex.Unescape(fields[5]).Split(newDelimeters);
                 if (field.Count() == 3)
                     origin = field[1];
                 else
-                    Console.WriteLine("Origin configuration has not been accounted for.");
+                    tool.messageBox("Origin location code in unknown: " + origin, "Unknown location code.");
 
                 /* Wagon planned destination. */
                 field = Regex.Unescape(fields[6]).Split(newDelimeters);
                 if (field.Count() == 3)
                     plannedDestination = field[1];
                 else
-                    Console.WriteLine("plannedDestination configuration has not been accounted for.");
+                    tool.messageBox("Consigned Destination location code in unknown: " + origin, "Unknown location code.");
 
                 /* Wagon destination. */
                 field = Regex.Unescape(fields[7]).Split(newDelimeters);
                 if (field.Count() == 3)
                     destination = field[1];
                 else
-                    Console.WriteLine("destination configuration has not been accounted for.");
+                    tool.messageBox("Destination location code in unknown: " + origin, "Unknown location code.");
 
                 /* Remaining Wagon details. */
                 DateTime.TryParse(fields[8], out attachmentTime);
@@ -261,29 +271,28 @@ namespace wagonMovement
 
                 // TODO:
                 // Clean the data - validate - function.
-                // Check against known issues
-                
+                // -filter
+                // -Check against known issues (SCP = LAV) etc.
+
                 /* Construct the wagon object and add to the list. */
                 // if (valid)
                 wagonDetails data = new wagonDetails(wagonID, origin, plannedDestination, destination, attachmentTime, detachmentTime, netWeight);
                 wagon.Add(data);
 
             }
-            
+
             /* Return the completed wagon List. */
             return wagon;
         }
 
-        /*
-         * Write the wagon movement details to excel for analysis.
-         */
+
         /// <summary>
         /// Write the wagon details to an excel file for later analysis.
         /// </summary>
         /// <param name="wagon">The wagon object containing the origin, destinaiton and net weight</param>
         public static void writeToExcel(List<wagonDetails> wagon)
         {
-            
+
             /* Create the microsfot excel references. */
             Microsoft.Office.Interop.Excel.Application excel;
             Microsoft.Office.Interop.Excel._Workbook workbook;
@@ -331,11 +340,10 @@ namespace wagonMovement
             worksheet.get_Range("E2", "E" + wagon.Count).Value2 = attatch;
             worksheet.get_Range("F2", "F" + wagon.Count).Value2 = detatch;
             worksheet.get_Range("G2", "G" + wagon.Count).Value2 = weight;
-            
+
             //string savePath = @"S:\Corporate Strategy\Market Analysis & Forecasts\Volume\Wagon movement analysis";
             string savePath = @"C:\Users\Beau\Documents\ARTC\Wagon Volumes";    // home path
-            // TODO: Create a filename based on current date.
-            string saveFilename = savePath + @"\wagonDetails.xlsx";
+            string saveFilename = savePath + @"\wagonDetails_" + DateTime.Now.ToString("yyyyMMdd") + ".xlsx";
 
             /* Check the file does not exist yet. */
             if (File.Exists(saveFilename))
@@ -351,6 +359,8 @@ namespace wagonMovement
 
             return;
         }
+
+
 
     } // end of program class
 

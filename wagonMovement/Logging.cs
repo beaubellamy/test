@@ -1,6 +1,6 @@
 ﻿/*
- * This class creates an instantiation of the Log class and provides access 
- * to any function in the wagonMovement namespace to write a string to the log file.
+ * This class provides logging capability to any function in the 
+ * wagonMovement namespace to write a string to the log file.
  */
 
 using System;
@@ -29,7 +29,7 @@ namespace wagonMovement
         {
             //string path = @"S:\Corporate Strategy\Market Analysis & Forecasts\Volume\Wagon movement analysis\Wagon Movement Source\";
             string path = @"C:\Users\Beau\Documents\ARTC\Wagon Volumes\";      // Home location
-            logFilename = path + "log_" + DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss") + ".csv";
+            logFilename = path + "log_" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".csv";
             openFileForWriting();
         }
 
@@ -76,7 +76,7 @@ namespace wagonMovement
 
             try
             {
-                log.WriteLine(DateTime.Now.ToLongTimeString()+", "+ DateTime.Now.ToShortDateString()+", "+ line);
+                log.WriteLine(DateTime.Now.ToLongTimeString() + ", " + DateTime.Now.ToShortDateString() + ", " + line);
                 log.Flush();
                 return true;
             }
