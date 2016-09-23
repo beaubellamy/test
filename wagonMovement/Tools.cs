@@ -1,5 +1,5 @@
 ﻿/*
- * 
+ * Tools class containing methods for dispalying messages and file manipulation.
  */
 
 using System;

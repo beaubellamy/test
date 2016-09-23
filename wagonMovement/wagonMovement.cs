@@ -64,6 +64,9 @@ namespace wagonMovement
                 this.attachmentTime = wagon.attachmentTime;
                 this.detachmentTime = wagon.detachmentTime;
                 this.netWeight = wagon.netWeight;
+
+                /* Fix the known issues with the location codes. */
+                fixIssues(this.plannedDestination, this.destination);
             }
 
             /// <summary>
@@ -83,6 +86,9 @@ namespace wagonMovement
                 this.attachmentTime = new DateTime(2000, 1, 1);
                 this.detachmentTime = new DateTime(2000, 1, 1);
                 this.netWeight = netWeight;
+
+                /* Fix the known issues with the location codes. */
+                fixIssues(this.plannedDestination, this.destination);
             }
 
             /// <summary>
@@ -104,8 +110,35 @@ namespace wagonMovement
                 this.attachmentTime = attachmentTime;
                 this.detachmentTime = detachmentTime;
                 this.netWeight = netWeight;
+
+                /* Fix the known issues with the location codes. */
+                fixIssues(this.plannedDestination, this.destination);
             }
 
+            /// <summary>
+            /// Fix the known issues with the location codes.
+            /// </summary>
+            /// <param name="plannedDestination">The planned destination code of the wagon.</param>
+            /// <param name="destination">The destination code of teh wagon.</param>
+            private void fixIssues(string plannedDestination, string destination)
+            {
+                /* Issue 1:
+                 * The location code 'LAV' does not exist. It is assumed that this refers to SCT-Laverton 
+                 * as the next origin location is 'SCT' (SCT-Laverton). 
+                 */
+                if (plannedDestination.Equals("LAV"))
+                    this.plannedDestination = "SCT";
+                
+                /* Issue 2:
+                 * When the location code 'CNM' appears in the destination, the next origin location is 'PGM'.
+                 * These locations are approximtly 20 km apart, with no indication of how the wagon was 
+                 * transported between these locations. Therefore, it is assumed that the two locations 
+                 * are the same. The 'PGM' location has been chosen to be the reference location. 
+                 */
+                if (destination.Equals("CNM"))
+                    this.destination = "PGM";
+
+            }
         }
 
         /// <summary>
@@ -206,7 +239,7 @@ namespace wagonMovement
             List<wagonDetails> wagon = new List<wagonDetails>();
 
             /* Validate the format of the first line of the file. */
-            // This can not be header information.
+            // NOTE: This can not be header information.
             Boolean validFormat = false;
             string[] fields = lines[0].Split(delimiters);
             validFormat = tool.validateFileFormat(fields);
@@ -215,6 +248,8 @@ namespace wagonMovement
                 /* The file format is invalid, return the empty wagon object. */
                 throw new IOException("Data file has an invalid format.");
             }
+
+            Boolean filter = true;
 
             /* Extract the wagon details from the data file. */
             foreach (string line in lines)
@@ -234,57 +269,77 @@ namespace wagonMovement
                 string[] field1 = Regex.Unescape(fields[1]).Split(newDelimeters);
 
                 /* Extract the cleaned fields and populate the wagon detail arrays. */
+                filter = filterData(field0[1]);
 
                 /* Wagon ID. */
                 if (field0.Count() == 3 && field1.Count() == 1)
+                {
+                    filter = filterData(field0[1]);
                     wagonID = field0[1] + "-" + field1[0];
+                }
                 else
+                {
+                    filter = false;
                     tool.messageBox("Wagon ID configuration has not been accounted for.", "Unknown wagon ID configuration.");
+                }
 
-                /* Wagon Origin. */
-                string[] field = Regex.Unescape(fields[5]).Split(newDelimeters);
-                if (field.Count() == 3)
-                    origin = field[1];
-                else
-                    tool.messageBox("Origin location code in unknown: " + origin, "Unknown location code.");
+                if (filter)
+                {
+                    /* Wagon Origin. */
+                    string[] field = Regex.Unescape(fields[5]).Split(newDelimeters);
+                    if (field.Count() == 3)
+                        origin = field[1];
+                    else
+                        tool.messageBox("Origin location code in unknown: " + origin, "Unknown location code.");
 
-                /* Wagon planned destination. */
-                field = Regex.Unescape(fields[6]).Split(newDelimeters);
-                if (field.Count() == 3)
-                    plannedDestination = field[1];
-                else
-                    tool.messageBox("Consigned Destination location code in unknown: " + origin, "Unknown location code.");
+                    /* Wagon planned destination. */
+                    field = Regex.Unescape(fields[6]).Split(newDelimeters);
+                    if (field.Count() == 3)
+                        plannedDestination = field[1];
+                    else
+                        tool.messageBox("Consigned Destination location code in unknown: " + origin, "Unknown location code.");
 
-                /* Wagon destination. */
-                field = Regex.Unescape(fields[7]).Split(newDelimeters);
-                if (field.Count() == 3)
-                    destination = field[1];
-                else
-                    tool.messageBox("Destination location code in unknown: " + origin, "Unknown location code.");
+                    /* Wagon destination. */
+                    field = Regex.Unescape(fields[7]).Split(newDelimeters);
+                    if (field.Count() == 3)
+                        destination = field[1];
+                    else
+                        tool.messageBox("Destination location code in unknown: " + origin, "Unknown location code.");
 
-                /* Remaining Wagon details. */
-                DateTime.TryParse(fields[8], out attachmentTime);
-                DateTime.TryParse(fields[9], out detachmentTime);
-                double.TryParse(fields[10], out tareWeight);
-                double.TryParse(fields[11], out grossWeight);
-                netWeight = grossWeight - tareWeight;
+                    /* Remaining Wagon details. */
+                    DateTime.TryParse(fields[8], out attachmentTime);
+                    DateTime.TryParse(fields[9], out detachmentTime);
+                    double.TryParse(fields[10], out tareWeight);
+                    double.TryParse(fields[11], out grossWeight);
+                    netWeight = grossWeight - tareWeight;
 
-                // TODO:
-                // Clean the data - validate - function.
-                // -filter
-                // -Check against known issues (SCP = LAV) etc.
-
-                /* Construct the wagon object and add to the list. */
-                // if (valid)
-                wagonDetails data = new wagonDetails(wagonID, origin, plannedDestination, destination, attachmentTime, detachmentTime, netWeight);
-                wagon.Add(data);
-
+                    /* Construct the wagon object and add to the list. */
+                    wagonDetails data = new wagonDetails(wagonID, origin, plannedDestination, destination, attachmentTime, detachmentTime, netWeight);
+                    wagon.Add(data);
+                }
             }
 
             /* Return the completed wagon List. */
             return wagon;
         }
 
+        /// <summary>
+        /// Filter the wagon data so that only intermodal traffic is kept.
+        /// </summary>
+        /// <param name="wagonClass"></param>
+        /// <returns></returns>
+        public static Boolean filterData(string wagonClass)
+        {
+            /* Wagon class must be a string of 4 characters long.
+             * Any other indicates a locomotive or wagons that aren't freight related. */
+            int result = 0;
+            if (int.TryParse(wagonClass, out result))
+                return false;
+            else if (wagonClass.Count() != 4)
+                return false;
+            else
+                return true;
+        }
 
         /// <summary>
         /// Write the wagon details to an excel file for later analysis.
