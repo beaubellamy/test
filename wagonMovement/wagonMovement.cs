@@ -28,13 +28,68 @@ namespace wagonMovement
         /// </summary>
         public class volumeMovement
         {
-            string wagonID;
-            string Origin;
-            string Via;
-            string Destination;
-            double weight;
-            //bool hasBeenCounted;
+            public string wagonID;
+            public string Origin;
+            public string Via;
+            public string Destination;
+            public double weight;
+            public bool hasBeenCounted;
+           
+            /// <summary>
+            /// Default volumeMovement constructor
+            /// </summary>
+            /// <param name="volume">Wagon details object.</param>
+            public volumeMovement(wagonDetails volume)
+            {
+                this.wagonID = volume.wagonID;
+                this.Origin = volume.origin;
+                this.Via = volume.plannedDestination;
+                this.Destination = volume.destination;
+                this.weight = volume.netWeight;
+                this.hasBeenCounted = false;
 
+            }
+
+            /// <summary>
+            /// VolumeMovement constructor.
+            /// </summary>
+            /// <param name="wagonID">Wagon class and number.</param>
+            /// <param name="Origin">Wagon origin.</param>
+            /// <param name="plannedDestination">Wagon planned destination.</param>
+            /// <param name="Destination">Wagon actual destination.</param>
+            /// <param name="weight">Net weight carried by the wagon.</param>
+            public volumeMovement(string wagonID, string Origin, string plannedDestination, string Destination, double weight)
+            {
+                this.wagonID = wagonID;
+                this.Origin = Origin;
+                this.Via = plannedDestination;
+                this.Destination = Destination;
+                this.weight = weight;
+                this.hasBeenCounted = false;
+
+            }
+
+            /// <summary>
+            /// VolumeMovement constructor.
+            /// </summary>
+            /// <param name="wagonID">Wagon class and number.</param>
+            /// <param name="Origin">Wagon origin.</param>
+            /// <param name="plannedDestination">Wagon planned destination.</param>
+            /// <param name="Destination">Wagon actual destination.</param>
+            /// <param name="weight">Net weight carried by the wagon.</param>
+            /// <param name="hasBeenCounted">Flag indicating if the volume has been counted in the final volume movement list.</param>
+            public volumeMovement(string wagonID, string Origin, string plannedDestination, string Destination, double weight, bool hasBeenCounted)
+            {
+                this.wagonID = wagonID;
+                this.Origin = Origin;
+                this.Via = plannedDestination;
+                this.Destination = Destination;
+                this.weight = weight;
+                this.hasBeenCounted = hasBeenCounted;
+
+            }
+
+           
         };
 
         /// <summary>
@@ -188,6 +243,8 @@ namespace wagonMovement
                 }
             }
 
+            List<volumeMovement> volume = new List<volumeMovement>();
+            volume = algorithm(wagon);
             /*
              * wagon movement algorithms ...
              */
@@ -199,6 +256,9 @@ namespace wagonMovement
 
         }
 
+
+        //////////////////////////////////////////////////////////
+        // CONSIDER PUTTING THESE FUNCTION IS TOOLS.
 
         /// <summary>
         /// Read the wagon data file.
@@ -326,19 +386,23 @@ namespace wagonMovement
         /// <summary>
         /// Filter the wagon data so that only intermodal traffic is kept.
         /// </summary>
-        /// <param name="wagonClass"></param>
-        /// <returns></returns>
+        /// <param name="wagonClass">The wagon class.</param>
+        /// <returns>True if the wagon class is 4 characters long with no numbers.</returns>
         public static Boolean filterData(string wagonClass)
         {
             /* Wagon class must be a string of 4 characters long.
              * Any other indicates a locomotive or wagons that aren't freight related. */
-            int result = 0;
-            if (int.TryParse(wagonClass, out result))
-                return false;
-            else if (wagonClass.Count() != 4)
-                return false;
+            if (wagonClass.Count() == 4)
+            {
+                if (Regex.IsMatch(wagonClass, @"\d"))
+                    return false;
+                else 
+                    return true;
+            }
             else
-                return true;
+            {
+                return false;
+            }
         }
 
         /// <summary>
@@ -415,6 +479,166 @@ namespace wagonMovement
             return;
         }
 
+        //////////////////////////////////////////////////////////
+
+        public static List<volumeMovement> algorithm(List<wagonDetails> wagon)
+        {
+            List<volumeMovement> volume = new List<volumeMovement>();
+            int searchIdx = 0;
+            //int volumeIdx = 0;
+
+            for (int recordIdx = 0; recordIdx < wagon.Count(); recordIdx++)
+            {
+                volumeMovement item = new volumeMovement(wagon[recordIdx]);
+
+                /* Wagon reached the planned destination without any intermediate stops. */
+                if (wagon[recordIdx].plannedDestination.Equals(wagon[recordIdx].destination))
+                {
+                    volume.Add(item);
+                }
+                else
+                {
+                    /* The wagon was detatched at an intermediate location before continueing on to the planned destination. */
+
+                    /* Find the recordId, where the wagon reaches its planned destination. */
+                    searchIdx = recordIdx + 1;
+                    /*wagonDetails currentWagonMovement = new wagonDetails(wagon[recordIdx]);
+                    wagonDetails searchWagonMovement = new wagonDetails(wagon[searchIdx]);
+                    wagonDetails previousSearchWagonMovement = new wagonDetails(wagon[searchIdx-1]);
+                    */
+                    while (!wagon[searchIdx].plannedDestination.Equals(wagon[searchIdx].destination))
+                    {
+                        if (wagon[searchIdx-1].wagonID.Equals(wagon[searchIdx].wagonID) &&
+                           !wagon[recordIdx].plannedDestination.Equals(wagon[searchIdx].plannedDestination) &&
+                            wagon[recordIdx].attachmentTime < wagon[recordIdx-1].attachmentTime)
+                        {
+                            /* Correct the apparent mismatch in locations where the time stamps seems to 
+                             * indicate that the wagon has been attatched to two trains simultaneously. */
+                            
+                            /* Replace the origin location. */
+                            //item.Origin = wagon[recordIdx].origin;
+                            //volume.RemoveAt(volume.Count()-1);
+                            //volume.Add(item);
+                            volume.Last().Origin = wagon[recordIdx].origin;
+                            searchIdx++;
+                            recordIdx++;
+
+                        }
+                        else if (wagon[recordIdx].plannedDestination.Equals(wagon[searchIdx].plannedDestination) &&
+                                !wagon[searchIdx].plannedDestination.Equals(wagon[searchIdx].destination) )
+                        {
+                            /* The wagon movement is continueing to the planned destiantion. */
+                            if (searchIdx == wagon.Count() - 1)
+                                break;
+
+                            searchIdx++;
+                        }
+                        else
+                        {
+                            searchIdx--;
+                            break;
+                        }
+
+                    } // while loop
+
+                    /* The wagon has reached its planned destination. */
+                    //volumeMovement volumeItem = new volumeMovement(wagon[recordIdx].wagonID, wagon[recordIdx].origin, "", wagon[recordIdx].destination, wagon[recordIdx].netWeight);
+                    item = new volumeMovement(wagon[recordIdx].wagonID, wagon[recordIdx].origin, "", wagon[recordIdx].destination, wagon[recordIdx].netWeight);
+                    volume.Add(item);
+
+
+                    if (!wagon[recordIdx].plannedDestination.Equals(wagon[searchIdx].plannedDestination))
+                    { 
+                        /* The wagon has been detatched before it reached the planned destination. */
+                        searchIdx = recordIdx;
+                    }
+
+                    /* Loop through the wagon records to determine the wagon weight and final destination. */
+                    for (int index = recordIdx; index < searchIdx; index++)
+                    { 
+                        /* Check the wagons being compared are the same wagon. */
+                        if (wagon[recordIdx].wagonID.Equals(wagon[index].wagonID))
+                        {
+
+                            if (index <= recordIdx + 1)
+                            {
+                                if(wagon[recordIdx].netWeight == wagon[index].netWeight)
+                                {
+                                    /* The weight has not changed. */
+                                    volume.Last().Destination = wagon[index].destination;
+                                }
+                                else if (wagon[recordIdx].netWeight < wagon[index].netWeight)
+                                {
+                                    /* Weight has been added at the intermediate destination. */
+                                    volume.Last().Destination = wagon[index].destination;
+                
+                                    item = new volumeMovement(wagon[recordIdx].wagonID, wagon[index].origin, "", wagon[index].destination, wagon[index].netWeight- wagon[recordIdx].netWeight);
+                                    volume.Add(item);
+                           
+                                }
+                                else
+                                {
+                                    /* Weight has been removed at the intermediate destination. */
+                                    volume.Last().Destination = wagon[index].destination;
+                                    volume.Last().weight = wagon[index].netWeight;
+
+                                    item = new volumeMovement(wagon[recordIdx].wagonID, wagon[recordIdx].origin, "", wagon[recordIdx].destination, wagon[recordIdx].netWeight - wagon[index].netWeight);
+                                    volume.Add(item);
+                                }
+                            }
+                            else
+                            {
+                                /* Multiple intermediate locations have been found. */
+                                if (wagon[recordIdx].netWeight == wagon[index].netWeight)
+                                {
+                                    /* The weights remained the same. */
+                                    volume.Last().Destination = wagon[index].destination;
+                                }
+                                else if (wagon[recordIdx].netWeight < wagon[index].netWeight)
+                                {
+                                    /* Weight has been added at an intermediate locations. */
+                                    volume[volume.Count() - 1].Destination = wagon[index].destination;
+                                    volume.Last().Destination = wagon[index].destination;
+                                }
+                                else
+                                {
+                                    /* Weight has been removed at an intermediate locations. */
+                                    volume.Last().Destination = wagon[index].destination;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            searchIdx--;
+                        }
+                    }
+                    /* Reset the record Index to the current location. */
+                    recordIdx = searchIdx;
+                }
+                /* Find the wagon movements that are continuations of the volumes. */
+
+                if (volume.Count() > 1)
+                {
+                    /* It is assumed that any volume movement that is a continuation does not have a change in weight. */
+                    if (volume.Last().wagonID.Equals(volume[volume.Count()-1].wagonID) &&
+                        volume.Last().Origin.Equals(volume[volume.Count()-1].Destination) &&
+                        volume.Last().weight.Equals(volume[volume.Count()-1].weight))
+                    {
+                        /* Update the previous volume destination. */
+                        int previousIdx = volume.Count() - 2;   // maybe -1
+                        volume[previousIdx].Via = volume[previousIdx].Destination;
+                        volume[previousIdx].Destination = volume.Last().Destination;
+                    }
+                }
+    
+
+                /* Record the number of origin-destination pairs. */
+
+                /* Write the volume dat to file for analysis. */
+            }
+
+            return volume;
+        }
 
 
     } // end of program class
