@@ -248,11 +248,15 @@ namespace wagonMovement
             /*
              * wagon movement algorithms ...
              */
+            fun(ref volume);
+
+
 
 
             /* Write the wagon details to excel. */
-            writeToExcel(wagon);
+            writeWagonDataToExcel(wagon);
 
+            tool.messageBox("Finished.");
 
         }
 
@@ -350,21 +354,21 @@ namespace wagonMovement
                     if (field.Count() == 3)
                         origin = field[1];
                     else
-                        tool.messageBox("Origin location code in unknown: " + origin, "Unknown location code.");
+                        tool.messageBox("Origin location code is unknown: " + origin, "Unknown location code.");
 
                     /* Wagon planned destination. */
                     field = Regex.Unescape(fields[6]).Split(newDelimeters);
                     if (field.Count() == 3)
                         plannedDestination = field[1];
                     else
-                        tool.messageBox("Consigned Destination location code in unknown: " + origin, "Unknown location code.");
+                        tool.messageBox("Consigned Destination location code in unknown: " + origin + " - " + field, "Unknown location code.");
 
                     /* Wagon destination. */
                     field = Regex.Unescape(fields[7]).Split(newDelimeters);
                     if (field.Count() == 3)
                         destination = field[1];
                     else
-                        tool.messageBox("Destination location code in unknown: " + origin, "Unknown location code.");
+                        tool.messageBox("Destination location code in unknown: " + origin + " - " + field, "Unknown location code.");
 
                     /* Remaining Wagon details. */
                     DateTime.TryParse(fields[8], out attachmentTime);
@@ -409,7 +413,188 @@ namespace wagonMovement
         /// Write the wagon details to an excel file for later analysis.
         /// </summary>
         /// <param name="wagon">The wagon object containing the origin, destinaiton and net weight</param>
-        public static void writeToExcel(List<wagonDetails> wagon)
+        public static void writeWagonDataToExcel(List<wagonDetails> wagon)
+        {
+
+            /* Create the microsfot excel references. */
+            Microsoft.Office.Interop.Excel.Application excel;
+            Microsoft.Office.Interop.Excel._Workbook workbook;
+            Microsoft.Office.Interop.Excel._Worksheet worksheet;
+
+            /*Start Excel and get Application object. */
+            excel = new Microsoft.Office.Interop.Excel.Application();
+
+            /* Get the reference to the new workbook. */
+            workbook = (Microsoft.Office.Interop.Excel._Workbook)(excel.Workbooks.Add(""));
+            //worksheet = (Microsoft.Office.Interop.Excel._Worksheet)workbook; //workbook.ActiveSheet;
+            //worksheet = (Microsoft.Office.Interop.Excel._Worksheet)workbook.Sheets[1];
+            //workbook.Sheets[1].Activate(); 
+
+
+            /* Create the header details. */
+            string[] headerString = { "Wagon ID", "Origin", "Planned Destiantion", "Destination", 
+                                  "Attatchment Time", "Detatchment Time", "Net Weight" };
+            //worksheet.get_Range("A1", "G1").Value2 = headerString;
+
+            int batchSize = 1000000; //1 million.
+
+            /* Deconstruct the wagon details into excel columns. */
+            string[,] ID = new string[batchSize, 1];
+            string[,] Orig = new string[batchSize, 1];
+            string[,] Planned = new string[batchSize, 1];
+            string[,] Dest = new string[batchSize, 1];
+            DateTime[,] attatch = new DateTime[batchSize, 1];
+            DateTime[,] detatch = new DateTime[batchSize, 1];
+            double[,] weight = new double[batchSize, 1];
+
+            /* Loop through the wagon list to deconstruct the data. */
+            //for (int i = 0; i < wagon.Count; i++)
+            //{
+            //    ID[i, 0] = wagon[i].wagonID;
+            //    Orig[i, 0] = wagon[i].origin;
+            //    Planned[i, 0] = wagon[i].plannedDestination;
+            //    Dest[i, 0] = wagon[i].destination;
+            //    attatch[i, 0] = wagon[i].attachmentTime;
+            //    detatch[i, 0] = wagon[i].detachmentTime;
+            //    weight[i, 0] = wagon[i].netWeight;
+
+            //}
+            int numberOfBatches = (int)((double)wagon.Count() / batchSize + 0.5);
+            int header = 2;
+            numberOfBatches = (int)Math.Round((double)wagon.Count() / batchSize + 0.5);
+
+            // may need batch processing
+    //         For batchIdx = 1 To numberOfBatches
+            for (int batchIdx = 0; batchIdx < numberOfBatches; batchIdx++)
+            {
+                worksheet = (Microsoft.Office.Interop.Excel._Worksheet)workbook.Sheets[batchIdx+1];
+                workbook.Sheets[batchIdx+1].Activate();
+                worksheet.get_Range("A1", "G1").Value2 = headerString;
+
+                //int batchFirstIdx = (batchIdx) * batchSize;
+                //int batchLastIdx = batchSize + (batchIdx) * batchSize;
+
+                for (int j = 0; j < batchSize; j++)
+                {
+                    int checkIdx = j + batchIdx * batchSize;
+                    if (checkIdx < wagon.Count()) 
+                    {
+                        ID[j, 0] = wagon[checkIdx].wagonID;
+                        Orig[j, 0] = wagon[checkIdx].origin;
+                        Planned[j, 0] = wagon[checkIdx].plannedDestination;
+                        Dest[j, 0] = wagon[checkIdx].destination;
+                        attatch[j, 0] = wagon[checkIdx].attachmentTime;
+                        detatch[j, 0] = wagon[checkIdx].detachmentTime;
+                        weight[j, 0] = wagon[checkIdx].netWeight;
+                    }
+                    else
+                    {
+                        ID[j, 0] = "";
+                        Orig[j, 0] = "";
+                        Planned[j, 0] = "";
+                        Dest[j, 0] = "";
+                        attatch[j, 0] = DateTime.MinValue;
+                        detatch[j, 0] = DateTime.MinValue;
+                        weight[j, 0] = 0;
+                    }
+
+            //        If (i + (batchIdx - 1) * batchSize < numberOfODPairs) Then
+            //    W(i) = volume(i + (batchIdx - 1) * batchSize).WagonID
+            //    O(i) = volume(i + (batchIdx - 1) * batchSize).Origin
+            //    V(i) = volume(i + (batchIdx - 1) * batchSize).Via
+            //    D(i) = volume(i + (batchIdx - 1) * batchSize).Destination
+            //    Total(i) = volume(i + (batchIdx - 1) * batchSize).Weight
+            //Else
+            //    W(i) = ""
+            //    O(i) = ""
+            //    V(i) = ""
+            //    D(i) = ""
+            //    Total(i) = 0
+            //End If
+                }
+
+                worksheet.get_Range("A" + header, "A" + (header + batchSize)).Value2 = ID;
+                worksheet.get_Range("B" + header, "B" + (header + batchSize)).Value2 = Orig;
+                worksheet.get_Range("C" + header, "C" + (header + batchSize)).Value2 = Planned;
+                worksheet.get_Range("D" + header, "D" + (header + batchSize)).Value2 = Dest;
+                worksheet.get_Range("E" + header, "E" + (header + batchSize)).Value2 = attatch;
+                worksheet.get_Range("F" + header, "F" + (header + batchSize)).Value2 = detatch;
+                worksheet.get_Range("G" + header, "G" + (header + batchSize)).Value2 = weight;
+                
+                //for (int i = 0; i < batchSize; i++)
+                //{ 
+                //    if(i+(batchSize-1)*batchIdx < wagon.Count())
+                //    {
+                //    }
+                //    else
+                //    {
+                //    }
+                //}
+            
+            }
+    //    batchFirstIdx = 1 + (batchIdx - 1) * batchSize
+    //    batchLastIdx = batchSize + (batchIdx - 1) * batchSize
+    
+    //    For i = 1 To batchSize
+    //        If (i + (batchIdx - 1) * batchSize < numberOfODPairs) Then
+    //            W(i) = volume(i + (batchIdx - 1) * batchSize).WagonID
+    //            O(i) = volume(i + (batchIdx - 1) * batchSize).Origin
+    //            V(i) = volume(i + (batchIdx - 1) * batchSize).Via
+    //            D(i) = volume(i + (batchIdx - 1) * batchSize).Destination
+    //            Total(i) = volume(i + (batchIdx - 1) * batchSize).Weight
+    //        Else
+    //            W(i) = ""
+    //            O(i) = ""
+    //            V(i) = ""
+    //            D(i) = ""
+    //            Total(i) = 0
+    //        End If
+    //    Next i
+        
+    //    ' Write each batch of volume data to file.
+    //    Sheet5.Range(Cells(Header + batchFirstIdx, wagonCol), Cells(batchLastIdx + Header, wagonCol)) = WorksheetFunction.Transpose(W)
+    //    Sheet5.Range(Cells(Header + batchFirstIdx, originCol), Cells(batchLastIdx + Header, originCol)) = WorksheetFunction.Transpose(O)
+    //    Sheet5.Range(Cells(Header + batchFirstIdx, viaCol), Cells(batchLastIdx + Header, viaCol)) = WorksheetFunction.Transpose(V)
+    //    Sheet5.Range(Cells(Header + batchFirstIdx, destCol), Cells(batchLastIdx + Header, destCol)) = WorksheetFunction.Transpose(D)
+    //    Sheet5.Range(Cells(Header + batchFirstIdx, weightCol), Cells(batchLastIdx + Header, weightCol)) = WorksheetFunction.Transpose(Total)
+
+        
+    //Next batchIdx
+            /* Write the wagon data to the excel file. */
+           
+
+            //worksheet.get_Range("A2", "A" + wagon.Count).Value2 = ID;
+            //worksheet.get_Range("B2", "B" + wagon.Count).Value2 = Orig;
+            //worksheet.get_Range("C2", "C" + wagon.Count).Value2 = Planned;
+            //worksheet.get_Range("D2", "D" + wagon.Count).Value2 = Dest;
+            //worksheet.get_Range("E2", "E" + wagon.Count).Value2 = attatch;
+            //worksheet.get_Range("F2", "F" + wagon.Count).Value2 = detatch;
+            //worksheet.get_Range("G2", "G" + wagon.Count).Value2 = weight;
+
+            //string savePath = @"S:\Corporate Strategy\Market Analysis & Forecasts\Volume\Wagon movement analysis";
+            string savePath = @"C:\Users\Beau\Documents\ARTC\Wagon Volumes";    // home path
+            string saveFilename = savePath + @"\wagonDetails_" + DateTime.Now.ToString("yyyyMMdd") + ".xlsx";
+
+            /* Check the file does not exist yet. */
+            if (File.Exists(saveFilename))
+                File.Delete(saveFilename);
+
+            /* Save the excel file. */
+            excel.UserControl = false;
+            workbook.SaveAs(saveFilename, Microsoft.Office.Interop.Excel.XlFileFormat.xlWorkbookDefault, Type.Missing, Type.Missing,
+                false, false, Microsoft.Office.Interop.Excel.XlSaveAsAccessMode.xlNoChange,
+                Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing);
+
+            workbook.Close();
+
+            return;
+        }
+
+
+
+
+
+        public static void writeVolumeDataToExcel(List<volumeMovement> volume)
         {
 
             /* Create the microsfot excel references. */
@@ -425,44 +610,43 @@ namespace wagonMovement
             worksheet = (Microsoft.Office.Interop.Excel._Worksheet)workbook.ActiveSheet;
 
             /* Create the header details. */
-            string[] header = { "Wagon ID", "Origin", "Planned Destiantion", "Destination", 
-                                  "Attatchment Time", "Detatchment Time", "Net Weight" };
-            worksheet.get_Range("A1", "G1").Value2 = header;
-
-            /* Deconstruct the wagon details into excel columns. */
-            string[,] ID = new string[wagon.Count, 1];
-            string[,] Orig = new string[wagon.Count, 1];
-            string[,] Planned = new string[wagon.Count, 1];
-            string[,] Dest = new string[wagon.Count, 1];
-            DateTime[,] attatch = new DateTime[wagon.Count, 1];
-            DateTime[,] detatch = new DateTime[wagon.Count, 1];
-            double[,] weight = new double[wagon.Count, 1];
+            string[] header = { "Wagon ID", "Origin", "Via", "Destination", "Net Weight" };
+            worksheet.get_Range("A1", "E1").Value2 = header;
+            
+            /* Deconstruct the volume data into excel columns. */
+            string[,] ID = new string[volume.Count, 1];
+            string[,] Orig = new string[volume.Count, 1];
+            string[,] Via = new string[volume.Count, 1];
+            string[,] Dest = new string[volume.Count, 1];
+            //DateTime[,] attatch = new DateTime[volume.Count, 1];
+            //DateTime[,] detatch = new DateTime[volume.Count, 1];
+            double[,] weight = new double[volume.Count, 1];
 
             /* Loop through the wagon list to deconstruct the data. */
-            for (int i = 0; i < wagon.Count; i++)
+            for (int i = 0; i < volume.Count; i++)
             {
-                ID[i, 0] = wagon[i].wagonID;
-                Orig[i, 0] = wagon[i].origin;
-                Planned[i, 0] = wagon[i].plannedDestination;
-                Dest[i, 0] = wagon[i].destination;
-                attatch[i, 0] = wagon[i].attachmentTime;
-                detatch[i, 0] = wagon[i].detachmentTime;
-                weight[i, 0] = wagon[i].netWeight;
+                ID[i, 0] = volume[i].wagonID;
+                Orig[i, 0] = volume[i].Origin;
+                Via[i, 0] = volume[i].Via;
+                Dest[i, 0] = volume[i].Destination;
+                //attatch[i, 0] = volume[i].attachmentTime;
+                //detatch[i, 0] = volume[i].detachmentTime;
+                weight[i, 0] = volume[i].weight;
 
             }
 
             /* Write the wagon data to the excel file. */
-            worksheet.get_Range("A2", "A" + wagon.Count).Value2 = ID;
-            worksheet.get_Range("B2", "B" + wagon.Count).Value2 = Orig;
-            worksheet.get_Range("C2", "C" + wagon.Count).Value2 = Planned;
-            worksheet.get_Range("D2", "D" + wagon.Count).Value2 = Dest;
-            worksheet.get_Range("E2", "E" + wagon.Count).Value2 = attatch;
-            worksheet.get_Range("F2", "F" + wagon.Count).Value2 = detatch;
-            worksheet.get_Range("G2", "G" + wagon.Count).Value2 = weight;
+            worksheet.get_Range("A2", "A" + volume.Count).Value2 = ID;
+            worksheet.get_Range("B2", "B" + volume.Count).Value2 = Orig;
+            worksheet.get_Range("C2", "C" + volume.Count).Value2 = Via;
+            worksheet.get_Range("D2", "D" + volume.Count).Value2 = Dest;
+            //worksheet.get_Range("E2", "E" + volume.Count).Value2 = attatch;
+            //worksheet.get_Range("F2", "F" + volume.Count).Value2 = detatch;
+            worksheet.get_Range("E2", "E" + volume.Count).Value2 = weight;
 
             //string savePath = @"S:\Corporate Strategy\Market Analysis & Forecasts\Volume\Wagon movement analysis";
             string savePath = @"C:\Users\Beau\Documents\ARTC\Wagon Volumes";    // home path
-            string saveFilename = savePath + @"\wagonDetails_" + DateTime.Now.ToString("yyyyMMdd") + ".xlsx";
+            string saveFilename = savePath + @"\VolumeData_" + DateTime.Now.ToString("yyyyMMdd") + ".xlsx";
 
             /* Check the file does not exist yet. */
             if (File.Exists(saveFilename))
@@ -615,29 +799,48 @@ namespace wagonMovement
                     /* Reset the record Index to the current location. */
                     recordIdx = searchIdx;
                 }
+
                 /* Find the wagon movements that are continuations of the volumes. */
 
-                if (volume.Count() > 1)
-                {
-                    /* It is assumed that any volume movement that is a continuation does not have a change in weight. */
-                    if (volume.Last().wagonID.Equals(volume[volume.Count()-1].wagonID) &&
-                        volume.Last().Origin.Equals(volume[volume.Count()-1].Destination) &&
-                        volume.Last().weight.Equals(volume[volume.Count()-1].weight))
-                    {
-                        /* Update the previous volume destination. */
-                        int previousIdx = volume.Count() - 2;   // maybe -1
-                        volume[previousIdx].Via = volume[previousIdx].Destination;
-                        volume[previousIdx].Destination = volume.Last().Destination;
-                    }
-                }
+                //if (volume.Count() > 1)
+                //{
+                //    /* It is assumed that any volume movement that is a continuation does not have a change in weight. */
+                //    if (volume.Last().wagonID.Equals(volume[volume.Count()-1].wagonID) &&
+                //        volume.Last().Origin.Equals(volume[volume.Count()-1].Destination) &&
+                //        volume.Last().weight.Equals(volume[volume.Count()-1].weight))
+                //    {
+                //        /* Update the previous volume destination. */
+                //        int previousIdx = volume.Count() - 2;   // maybe -1
+                //        volume[previousIdx].Via = volume[previousIdx].Destination;
+                //        volume[previousIdx].Destination = volume.Last().Destination;
+                //    }
+                //}
     
 
                 /* Record the number of origin-destination pairs. */
 
-                /* Write the volume dat to file for analysis. */
+                /* Write the volume data to file for analysis. */
             }
 
             return volume;
+        }
+
+
+        public static void fun(ref List<volumeMovement> volume)
+        { 
+            /* Amalgamate Volume data. */
+            for (int volumeIdx = 1; volumeIdx < volume.Count()-1; volumeIdx++)
+            {
+                if (volume[volumeIdx].wagonID.Equals(volume[volumeIdx - 1].wagonID) &&
+                    volume[volumeIdx].Origin.Equals(volume[volumeIdx - 1].Destination) &&
+                    volume[volumeIdx].weight.Equals(volume[volumeIdx - 1].weight))
+                {
+                    /* Update the previous volume destination. */
+                    volume[volumeIdx - 1].Via = volume[volumeIdx - 1].Destination;
+                    volume[volumeIdx - 1].Destination = volume[volumeIdx].Destination;
+                }
+            }
+                  
         }
 
 
