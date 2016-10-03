@@ -248,7 +248,7 @@ namespace wagonMovement
             /*
              * wagon movement algorithms ...
              */
-            fun(ref volume);
+            volume = fun(volume);
             // ******************************
             // get a better name for the function.
 
@@ -257,7 +257,7 @@ namespace wagonMovement
 
             /* Write the wagon details to excel. */
             writeWagonDataToExcel(wagon);
-            // write the volume data to file
+            writeVolumeDataToExcel(volume);
 
             tool.messageBox("Finished.");
 
@@ -371,7 +371,11 @@ namespace wagonMovement
                     if (field.Count() == 3)
                         destination = field[1];
                     else
-                        tool.messageBox("Destination location code in unknown: " + origin + " - " + field, "Unknown location code.");
+                        /* If the destination field is empty, assume the wagon reaches the planned destination. */
+                        if (field[0].Equals(""))
+                            destination = plannedDestination;
+                        else 
+                            tool.messageBox("Destination location code is unknown: " + origin + " - " + field, "Unknown location code.");
 
                     /* Remaining Wagon details. */
                     DateTime.TryParse(fields[8], out attachmentTime);
@@ -520,7 +524,7 @@ namespace wagonMovement
 
 
         /// <summary>
-        /// Write teh volume data to an excel file for analysis.
+        /// Write the volume data to an excel file for analysis.
         /// </summary>
         /// <param name="volume">The list of volume objects containing the final origin destination details.</param>
         public static void writeVolumeDataToExcel(List<volumeMovement> volume)
@@ -562,7 +566,7 @@ namespace wagonMovement
                 /* Set the active worksheet. */
                 worksheet = (Microsoft.Office.Interop.Excel._Worksheet)workbook.Sheets[excelPage + 1];
                 workbook.Sheets[excelPage + 1].Activate();
-                worksheet.get_Range("A1", "G1").Value2 = headerString;
+                worksheet.get_Range("A1", "E1").Value2 = headerString;
 
                 /* Loop through the data for each excel page. */
                 for (int j = 0; j < excelPageSize; j++)
@@ -597,10 +601,10 @@ namespace wagonMovement
                 worksheet.get_Range("B" + header, "B" + (header + excelPageSize)).Value2 = Orig;
                 worksheet.get_Range("C" + header, "C" + (header + excelPageSize)).Value2 = Via;
                 worksheet.get_Range("D" + header, "D" + (header + excelPageSize)).Value2 = Dest;
+                worksheet.get_Range("E" + header, "E" + (header + excelPageSize)).Value2 = weight;
                 //worksheet.get_Range("E" + header, "E" + (header + excelPageSize)).Value2 = attatch;
                 //worksheet.get_Range("F" + header, "F" + (header + excelPageSize)).Value2 = detatch;
-                worksheet.get_Range("E" + header, "E" + (header + excelPageSize)).Value2 = weight;
-
+                
             }
 
             //string savePath = @"S:\Corporate Strategy\Market Analysis & Forecasts\Volume\Wagon movement analysis";
@@ -764,9 +768,9 @@ namespace wagonMovement
                 //if (volume.Count() > 1)
                 //{
                 //    /* It is assumed that any volume movement that is a continuation does not have a change in weight. */
-                //    if (volume.Last().wagonID.Equals(volume[volume.Count()-1].wagonID) &&
-                //        volume.Last().Origin.Equals(volume[volume.Count()-1].Destination) &&
-                //        volume.Last().weight.Equals(volume[volume.Count()-1].weight))
+                //    if (volume.Last().wagonID.Equals(volume[volume.Count() - 1].wagonID) &&
+                //        volume.Last().Origin.Equals(volume[volume.Count() - 1].Destination) &&
+                //        volume.Last().weight.Equals(volume[volume.Count() - 1].weight))
                 //    {
                 //        /* Update the previous volume destination. */
                 //        int previousIdx = volume.Count() - 2;   // maybe -1
@@ -785,26 +789,86 @@ namespace wagonMovement
         }
 
 
-        public static void fun(ref List<volumeMovement> volume)
-        { 
-            /* Amalgamate Volume data. */
-            for (int volumeIdx = 1; volumeIdx < volume.Count()-1; volumeIdx++)
+        public static List<volumeMovement> fun(List<volumeMovement> volume)
+        {
+            List<volumeMovement> newVolume = new List<volumeMovement>();
+            int volumeIdx = 0;
+            int current = volumeIdx;
+            int next = current + 1;
+
+            string wagonID = "";
+            string Origin = "";
+            string Via = "";
+            string Destination = "";
+            double weight = 0;
+
+            for (volumeIdx = 0; volumeIdx < volume.Count()-1; volumeIdx++)
             {
-                if (volume[volumeIdx].wagonID.Equals(volume[volumeIdx - 1].wagonID) &&
-                    volume[volumeIdx].Origin.Equals(volume[volumeIdx - 1].Destination) &&
-                    volume[volumeIdx].weight.Equals(volume[volumeIdx - 1].weight))
+                current = volumeIdx;
+                next = current + 1;
+
+                if (volume[current].weight != 0)
                 {
-                    /* Update the previous volume destination. */
-                    volume[volumeIdx - 1].Via = volume[volumeIdx - 1].Destination;
-                    volume[volumeIdx - 1].Destination = volume[volumeIdx].Destination;
+                    while (volume[current].weight == volume[next].weight)
+                    {
+                        next++;
+                        if (next == volume.Count())
+                        {
+                            break;
+                        }
+                    }
+                    next--;
+                    wagonID = volume[current].wagonID;
+                    Origin = volume[current].Origin;
+                    if (volume[current].Via.Equals(volume[next].Via))
+                    {
+                        Via = "";
+                    }
+                    else
+                    {
+                        Via = volume[next].Origin;
+                    }
+                    Destination = volume[next].Destination;
+                    weight = volume[current].weight;
+
+                    volumeMovement item = new volumeMovement(wagonID, Origin, Via, Destination, weight);
+                    newVolume.Add(item);
+
+                    
                 }
+                else 
+                {
+                    wagonID = volume[current].wagonID;
+                    Origin = volume[current].Origin;
+                    if (volume[current].Via.Equals(volume[current].Destination))
+                    {
+                        Via = "";
+                    }
+                    else
+                    {
+                        Via = volume[current].Via;
+                    }
+                    Destination = volume[current].Destination;
+                    weight = volume[current].weight;
+                    
+                    volumeMovement item = new volumeMovement(wagonID, Origin, Via, Destination, weight);
+                    newVolume.Add(item);
+                    next--;
+                }
+                
+                volumeIdx = next;
+
+
             }
+            // might need to add the last volume???
+                return newVolume;
+
                   
         }
 
 
 
-        public static int excelPageSize { get; set; }
+        
     } // end of program class
 
 } // end of namespace
