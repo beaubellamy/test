@@ -8,6 +8,9 @@
 // Uncomment to turn logging on 
 //#define LOGGING 
 //---------------------------------------
+#define HOMEPATH
+//#define WORKPATH
+
 using System;
 using System.IO;
 using System.Collections.Generic;
@@ -192,6 +195,9 @@ namespace wagonMovement
                  */
                 if (destination.Equals("CNM"))
                     this.destination = "PGM";
+
+
+                
 
             }
         }
@@ -385,6 +391,16 @@ namespace wagonMovement
                     netWeight = grossWeight - tareWeight;
 
                     /* Construct the wagon object and add to the list. */
+
+                    /* Issue 3:
+                     * Successive wagon records can occaisionally represent movements that do not match 
+                     * the time stamp and movement through locations.
+                     * Ignore the wagon record, when the weight is the same between successive wagon movements 
+                     * and the travel time of the second wagon and the difference between attachments of each 
+                     * wagon is less than 2 min.
+                     */
+                    // Need access to the attachment and detatchment time.
+
                     wagonDetails data = new wagonDetails(wagonID, origin, plannedDestination, destination, attachmentTime, detachmentTime, netWeight);
                     wagon.Add(data);
                 }
@@ -501,8 +517,14 @@ namespace wagonMovement
             
             }
    
+#if (HOMEPATH)
+            string savePath = @"C:\Users\Beau\Documents\ARTC\Wagon Volumes";
+#else
+            string savePath = @"S:\Corporate Strategy\Market Analysis & Forecasts\Volume\Wagon movement analysis";
+#endif
+
             //string savePath = @"S:\Corporate Strategy\Market Analysis & Forecasts\Volume\Wagon movement analysis";
-            string savePath = @"C:\Users\Beau\Documents\ARTC\Wagon Volumes";    // home path
+            //string savePath = @"C:\Users\Beau\Documents\ARTC\Wagon Volumes";    // home path
             string saveFilename = savePath + @"\wagonDetails_" + DateTime.Now.ToString("yyyyMMdd") + ".xlsx";
 
             /* Check the file does not exist yet. */
@@ -607,8 +629,13 @@ namespace wagonMovement
                 
             }
 
+#if (HOMEPATH)
+            string savePath = @"C:\Users\Beau\Documents\ARTC\Wagon Volumes";
+#else
+            string savePath = @"S:\Corporate Strategy\Market Analysis & Forecasts\Volume\Wagon movement analysis";
+#endif
             //string savePath = @"S:\Corporate Strategy\Market Analysis & Forecasts\Volume\Wagon movement analysis";
-            string savePath = @"C:\Users\Beau\Documents\ARTC\Wagon Volumes";    // home path
+            //string savePath = @"C:\Users\Beau\Documents\ARTC\Wagon Volumes";    // home path
             string saveFilename = savePath + @"\volumeDetails_" + DateTime.Now.ToString("yyyyMMdd") + ".xlsx";
 
             /* Check the file does not exist yet. */
@@ -645,6 +672,7 @@ namespace wagonMovement
                 }
                 else
                 {
+                    
                     /* The wagon was detatched at an intermediate location before continueing on to the planned destination. */
 
                     /* Find the recordId, where the wagon reaches its planned destination. */
@@ -674,7 +702,7 @@ namespace wagonMovement
                         else if (wagon[recordIdx].plannedDestination.Equals(wagon[searchIdx].plannedDestination) &&
                                 !wagon[searchIdx].plannedDestination.Equals(wagon[searchIdx].destination) )
                         {
-                            /* The wagon movement is continueing to the planned destiantion. */
+                            /* The wagon movement is continueing to the planned destination. */
                             if (searchIdx == wagon.Count() - 1)
                                 break;
 
@@ -712,21 +740,21 @@ namespace wagonMovement
                                 if(wagon[recordIdx].netWeight == wagon[index].netWeight)
                                 {
                                     /* The weight has not changed. */
-                                    volume.Last().Destination = wagon[index].destination;
+                                    volume.Last().Destination = wagon[searchIdx].destination;   // was [index]
                                 }
                                 else if (wagon[recordIdx].netWeight < wagon[index].netWeight)
                                 {
                                     /* Weight has been added at the intermediate destination. */
-                                    volume.Last().Destination = wagon[index].destination;
-                
-                                    item = new volumeMovement(wagon[recordIdx].wagonID, wagon[index].origin, "", wagon[index].destination, wagon[index].netWeight- wagon[recordIdx].netWeight);
+                                    volume.Last().Destination = wagon[searchIdx].destination;   // was [index]
+
+                                    item = new volumeMovement(wagon[recordIdx].wagonID, wagon[index].origin, "", wagon[searchIdx].destination, wagon[index].netWeight - wagon[recordIdx].netWeight);
                                     volume.Add(item);
                            
                                 }
                                 else
                                 {
                                     /* Weight has been removed at the intermediate destination. */
-                                    volume.Last().Destination = wagon[index].destination;
+                                    volume.Last().Destination = wagon[index].destination;   // was [index]
                                     volume.Last().weight = wagon[index].netWeight;
 
                                     item = new volumeMovement(wagon[recordIdx].wagonID, wagon[recordIdx].origin, "", wagon[recordIdx].destination, wagon[recordIdx].netWeight - wagon[index].netWeight);
@@ -750,7 +778,7 @@ namespace wagonMovement
                                 else
                                 {
                                     /* Weight has been removed at an intermediate locations. */
-                                    volume.Last().Destination = wagon[index].destination;
+                                    volume[volume.Count() - 1].Destination = wagon[index].destination;
                                 }
                             }
                         }
@@ -762,6 +790,28 @@ namespace wagonMovement
                     /* Reset the record Index to the current location. */
                     recordIdx = searchIdx;
                 }
+
+                ///////
+                // try to do this in the fix function.
+
+                /* Check for time stamps that are wrong. */
+                // weight is the same, attatch times are within 2 min, and attatch - detatch of next item is within 2 min.
+                double timeDifference = 1440.0;
+                double travelTime = 1440.0;
+                if (recordIdx != wagon.Count() - 1)
+                {
+                    timeDifference = (wagon[recordIdx+1].attachmentTime - wagon[recordIdx].attachmentTime).TotalMinutes;
+                    travelTime = (wagon[recordIdx + 1].detachmentTime - wagon[recordIdx + 1].attachmentTime).TotalMinutes;
+
+                    if (wagon[recordIdx+1].wagonID.Equals(wagon[recordIdx].wagonID) &&
+                        wagon[recordIdx+1].netWeight == wagon[recordIdx].netWeight &&
+                        timeDifference < 2.0 &&
+                        travelTime < 2.0)
+                    {
+                        recordIdx++;
+                    }
+                }
+                ////////////
 
                 /* Find the wagon movements that are continuations of the volumes. */
 
