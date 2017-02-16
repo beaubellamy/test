@@ -255,8 +255,8 @@ namespace wagonMovement
             /* Set the browser properties. */
             fileSelectBrowser.Title = "Select Volume data file";
             fileSelectBrowser.InitialDirectory =
-                @"C:\Users\Beau\Documents\ARTC\Wagon Volumes";
-//                @"S:\Corporate Strategy\Market Analysis & Forecasts\Volume\Wagon movement analysis";
+//               @"C:\Users\Beau\Documents\ARTC\Wagon Volumes";
+                @"S:\Corporate Strategy\Market Analysis & Forecasts\Volume\Wagon movement analysis";
             fileSelectBrowser.Filter = "Text Files|*.txt";
             // "All EXCEL FILES (*.xlsx*)|*.xlsx*|All files (*.*)|*.*";
             fileSelectBrowser.FilterIndex = 2;
