@@ -19,198 +19,15 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Microsoft.Office.Interop.Excel;
+
+using TrainLibrary;
 
 namespace wagonMovement
 {
 
     class Program
     {
-
-        /// <summary>
-        /// A class to hold the journey characterstics of the volume.
-        /// </summary>
-        public class volumeMovement
-        {
-            public string wagonID;
-            public string Origin;
-            public string Via;
-            public string Destination;
-            public double weight;
-            public DateTime attachmentTime;
-            public DateTime detachmentTime;
-            public bool hasBeenCounted;
-
-            /// <summary>
-            /// Default volumeMovement constructor
-            /// </summary>
-            /// <param name="volume">Wagon details object.</param>
-            public volumeMovement(wagonDetails volume)
-            {
-                this.wagonID = volume.wagonID;
-                this.Origin = volume.origin;
-                this.Via = volume.plannedDestination;
-                this.Destination = volume.destination;
-                this.weight = volume.netWeight;
-                this.attachmentTime = volume.attachmentTime;
-                this.detachmentTime = volume.detachmentTime;
-
-                this.hasBeenCounted = false;
-
-            }
-
-            /// <summary>
-            /// VolumeMovement constructor.
-            /// </summary>
-            /// <param name="wagonID">Wagon class and number.</param>
-            /// <param name="Origin">Wagon origin.</param>
-            /// <param name="plannedDestination">Wagon planned destination.</param>
-            /// <param name="Destination">Wagon actual destination.</param>
-            /// <param name="weight">Net weight carried by the wagon.</param>
-            public volumeMovement(string wagonID, string Origin, string plannedDestination, string Destination, double weight, DateTime attachmentTime, DateTime detachmentTime)
-            {
-                this.wagonID = wagonID;
-                this.Origin = Origin;
-                this.Via = plannedDestination;
-                this.Destination = Destination;
-                this.weight = weight;
-                this.attachmentTime = attachmentTime;
-                this.detachmentTime = detachmentTime;
-
-                this.hasBeenCounted = false;
-
-            }
-
-            /// <summary>
-            /// VolumeMovement constructor.
-            /// </summary>
-            /// <param name="wagonID">Wagon class and number.</param>
-            /// <param name="Origin">Wagon origin.</param>
-            /// <param name="plannedDestination">Wagon planned destination.</param>
-            /// <param name="Destination">Wagon actual destination.</param>
-            /// <param name="weight">Net weight carried by the wagon.</param>
-            /// <param name="hasBeenCounted">Flag indicating if the volume has been counted in the final volume movement list.</param>
-            public volumeMovement(string wagonID, string Origin, string plannedDestination, string Destination, double weight, DateTime attachmentTime, DateTime detachmentTime, bool hasBeenCounted)
-            {
-                this.wagonID = wagonID;
-                this.Origin = Origin;
-                this.Via = plannedDestination;
-                this.Destination = Destination;
-                this.weight = weight;
-                this.attachmentTime = attachmentTime;
-                this.detachmentTime = detachmentTime;
-                this.hasBeenCounted = hasBeenCounted;
-
-            }
-
-
-        };
-
-        /// <summary>
-        /// A class to hold the wagon Characteristics for each wagon journey.
-        /// </summary>
-        public class wagonDetails
-        {
-
-            public string wagonID;
-            public string origin;
-            public string plannedDestination;
-            public string destination;
-            public DateTime attachmentTime;
-            public DateTime detachmentTime;
-            public double netWeight;
-
-            /// <summary>
-            /// Default Wagon Constrcutor.
-            /// </summary>
-            /// <param name="wagon">Wagon structure containing the origin, destination and volume carries among other properties.</param>
-            public wagonDetails(wagonDetails wagon)
-            {
-                this.wagonID = wagon.wagonID;
-                this.origin = wagon.origin;
-                this.plannedDestination = wagon.plannedDestination;
-                this.destination = wagon.destination;
-                this.attachmentTime = wagon.attachmentTime;
-                this.detachmentTime = wagon.detachmentTime;
-                this.netWeight = wagon.netWeight;
-
-                /* Fix the known issues with the location codes. */
-                fixIssues(this.plannedDestination, this.destination);
-            }
-
-            /// <summary>
-            /// Wagon Constructor.
-            /// </summary>
-            /// <param name="wagonID">The Wagon class ID.</param>
-            /// <param name="origin">The Origin location code of the wagon.</param>
-            /// <param name="plannedDestination">The planned destination code of the wagon.</param>
-            /// <param name="destination">The destination code of the wagon.</param>
-            /// <param name="netWeight">The net weight carried to the destination by the wagon.</param>
-            public wagonDetails(string wagonID, string origin, string plannedDestination, string destination, double netWeight)
-            {
-                this.wagonID = wagonID;
-                this.origin = origin;
-                this.plannedDestination = plannedDestination;
-                this.destination = destination;
-                this.attachmentTime = new DateTime(2000, 1, 1);
-                this.detachmentTime = new DateTime(2000, 1, 1);
-                this.netWeight = netWeight;
-
-                /* Fix the known issues with the location codes. */
-                fixIssues(this.plannedDestination, this.destination);
-            }
-
-            /// <summary>
-            /// Wagon Constructor.
-            /// </summary>
-            /// <param name="wagonID">The Wagon class ID.</param>
-            /// <param name="origin">The Origin location code of the wagon.</param>
-            /// <param name="plannedDestination">The planned destination code of the wagon.</param>
-            /// <param name="destination">The destination code of the wagon.</param>
-            /// <param name="attachmentTime">The time the wagon was attached to the Train.</param>
-            /// <param name="detachmentTime">The time the wagon was detached from the Train.</param>
-            /// <param name="netWeight">The net weight carried to the destination by the wagon.</param>
-            public wagonDetails(string wagonID, string origin, string plannedDestination, string destination, DateTime attachmentTime, DateTime detachmentTime, double netWeight)
-            {
-                this.wagonID = wagonID;
-                this.origin = origin;
-                this.plannedDestination = plannedDestination;
-                this.destination = destination;
-                this.attachmentTime = attachmentTime;
-                this.detachmentTime = detachmentTime;
-                this.netWeight = netWeight;
-
-                /* Fix the known issues with the location codes. */
-                fixIssues(this.plannedDestination, this.destination);
-            }
-
-            /// <summary>
-            /// Fix the known issues with the location codes.
-            /// </summary>
-            /// <param name="plannedDestination">The planned destination code of the wagon.</param>
-            /// <param name="destination">The destination code of teh wagon.</param>
-            private void fixIssues(string plannedDestination, string destination)
-            {
-                /* Issue 1:
-                 * The location code 'LAV' does not exist. It is assumed that this refers to SCT-Laverton 
-                 * as the next origin location is 'SCT' (SCT-Laverton). 
-                 */
-                if (plannedDestination.Equals("LAV"))
-                    this.plannedDestination = "SCT";
-
-                /* Issue 2:
-                 * When the location code 'CNM' appears in the destination, the next origin location is 'PGM'.
-                 * These locations are approximtly 20 km apart, with no indication of how the wagon was 
-                 * transported between these locations. Therefore, it is assumed that the two locations 
-                 * are the same. The 'PGM' location has been chosen to be the reference location. 
-                 */
-                if (destination.Equals("CNM"))
-                    this.destination = "PGM";
-
-
-
-
-            }
-        }
 
         /// <summary>
         /// Instantiation of the Log Class to provide logging capability.
@@ -259,23 +76,18 @@ namespace wagonMovement
                 }
             }
 
+            /* Combine the wagon movements based on planned destiantion and weights. */
             List<volumeMovement> volume = new List<volumeMovement>();
-            volume = algorithm(wagon);
-            /*
-             * wagon movement algorithms ...
-             */
-            volume = fun(volume);
-            // ******************************
-            // get a better name for the function.
-
-            // need to validate the volume results.
-
+            volume = combineWagonMovements(wagon);
+            
+            /* Combine the volume movements that appear to be continuations of the same wagon. */
+            volume = combineVolumeMovements(volume);
 
             /* Write the wagon details to excel. */
             writeWagonDataToExcel(wagon);
             writeVolumeDataToExcel(volume);
 
-            tool.messageBox("Finished.");
+            tool.messageBox("Program Complete.");
 
         }
 
@@ -312,6 +124,7 @@ namespace wagonMovement
             /* Read the all lines of the text file. */
             string[] lines = System.IO.File.ReadAllLines(filename);
             char[] delimiters = { ',' };
+            bool intermodalTraffic = false;
 
             double tareWeight = 0;
             double grossWeight = 0;
@@ -321,9 +134,10 @@ namespace wagonMovement
             /* Create the list of wagon objects. */
             List<wagonDetails> wagon = new List<wagonDetails>();
 
-            /* Validate the format of the first line of the file. */
-            // NOTE: This can not be header information.
-            Boolean validFormat = false;
+            /* Validate the format of the first line of the file.
+             * NOTE: This can not be header information.
+             */
+            bool validFormat = false;
             string[] fields = lines[0].Split(delimiters);
             validFormat = tool.validateFileFormat(fields);
             if (!validFormat)
@@ -331,9 +145,7 @@ namespace wagonMovement
                 /* The file format is invalid, return the empty wagon object. */
                 throw new IOException("Data file has an invalid format.");
             }
-
-            Boolean filter = true;
-
+            
             /* Extract the wagon details from the data file. */
             foreach (string line in lines)
             {
@@ -351,23 +163,22 @@ namespace wagonMovement
                 string[] field0 = Regex.Unescape(fields[0]).Split(newDelimeters);
                 string[] field1 = Regex.Unescape(fields[1]).Split(newDelimeters);
 
-                /* Extract the cleaned fields and populate the wagon detail arrays. */
-                filter = filterData(field0[1]);
-
                 /* Wagon ID. */
                 if (field0.Count() == 3 && field1.Count() == 1)
                 {
-                    filter = filterData(field0[1]);
+                    intermodalTraffic = filterIntermodalTraffic(field0[1]);
                     wagonID = field0[1] + "-" + field1[0];
                 }
                 else
                 {
-                    filter = false;
+                    intermodalTraffic = false;
                     tool.messageBox("Wagon ID configuration has not been accounted for.", "Unknown wagon ID configuration.");
                 }
 
-                if (filter)
+                if (intermodalTraffic)
                 {
+                    /* Validate the location codes */
+
                     /* Wagon Origin. */
                     string[] field = Regex.Unescape(fields[5]).Split(newDelimeters);
                     if (field.Count() == 3)
@@ -387,11 +198,12 @@ namespace wagonMovement
                     if (field.Count() == 3)
                         destination = field[1];
                     else
-                        /* If the destination field is empty, assume the wagon reaches the planned destination. */
+                    {   /* If the destination field is empty, assume the wagon reaches the planned destination. */
                         if (field[0].Equals(""))
                             destination = plannedDestination;
                         else
                             tool.messageBox("Destination location code is unknown: " + origin + " - " + field, "Unknown location code.");
+                    }
 
                     /* Remaining Wagon details. */
                     DateTime.TryParse(fields[8], out attachmentTime);
@@ -401,16 +213,6 @@ namespace wagonMovement
                     netWeight = grossWeight - tareWeight;
 
                     /* Construct the wagon object and add to the list. */
-
-                    /* Issue 3:
-                     * Successive wagon records can occaisionally represent movements that do not match 
-                     * the time stamp and movement through locations.
-                     * Ignore the wagon record, when the weight is the same between successive wagon movements 
-                     * and the travel time of the second wagon and the difference between attachments of each 
-                     * wagon is less than 2 min.
-                     */
-                    // Need access to the attachment and detatchment time.
-
                     wagonDetails data = new wagonDetails(wagonID, origin, plannedDestination, destination, attachmentTime, detachmentTime, netWeight);
                     wagon.Add(data);
                 }
@@ -425,12 +227,13 @@ namespace wagonMovement
         /// </summary>
         /// <param name="wagonClass">The wagon class.</param>
         /// <returns>True if the wagon class is 4 characters long with no numbers.</returns>
-        public static Boolean filterData(string wagonClass)
+        public static bool filterIntermodalTraffic(string wagonClass)
         {
             /* Wagon class must be a string of 4 characters long.
              * Any other indicates a locomotive or wagons that aren't freight related. */
             if (wagonClass.Count() == 4)
             {
+                /* There are no numbers in the wagon class ID of intermodal traffic. */
                 if (Regex.IsMatch(wagonClass, @"\d"))
                     return false;
                 else
@@ -448,24 +251,31 @@ namespace wagonMovement
         /// <param name="wagon">The list of wagon objects containing the origin, destinaiton and net weight</param>
         public static void writeWagonDataToExcel(List<wagonDetails> wagon)
         {
-
+            /* Maximum number of rows in an excel worksheet is 1,048,576 (round down to a nice number) */
+            int maxExcelRows = 1048500;
+            
             /* Create the microsfot excel references. */
-            Microsoft.Office.Interop.Excel.Application excel;
-            Microsoft.Office.Interop.Excel._Workbook workbook;
-            Microsoft.Office.Interop.Excel._Worksheet worksheet;
-
-            /*Start Excel and get Application object. */
-            excel = new Microsoft.Office.Interop.Excel.Application();
+            Microsoft.Office.Interop.Excel.Application excel = new Microsoft.Office.Interop.Excel.Application();
+            Workbook workbook;
+            Worksheet worksheet;
 
             /* Get the reference to the new workbook. */
-            workbook = (Microsoft.Office.Interop.Excel._Workbook)(excel.Workbooks.Add(""));
+            workbook = (Workbook)(excel.Workbooks.Add(""));
 
             /* Create the header details. */
             string[] headerString = { "Wagon ID", "Origin", "Planned Destiantion", "Destination", 
                                   "Attatchment Time", "Detatchment Time", "Net Weight" };
+                        
+            /* Get the page size of the excel worksheet. */
+            int header = 2;
+            int excelPageSize = wagon.Count()-1;
+            int excelPages = 1;
 
-            /* page size of the excel worksheet. */
-            int excelPageSize = 1000000;
+            if (wagon.Count() > maxExcelRows)
+            {
+                excelPageSize = 1000000;
+                excelPages = (int)Math.Round((double)wagon.Count() / excelPageSize + 0.5);
+            }
 
             /* Deconstruct the wagon details into excel columns. */
             string[,] ID = new string[excelPageSize, 1];
@@ -476,15 +286,12 @@ namespace wagonMovement
             DateTime[,] detatch = new DateTime[excelPageSize, 1];
             double[,] weight = new double[excelPageSize, 1];
 
-            /* Loop through the wagon list to deconstruct the data. */
-            int excelPages = (int)Math.Round((double)wagon.Count() / excelPageSize + 0.5);
-            int header = 2;
-
+            
             /* Loop through the excel pages. */
             for (int excelPage = 0; excelPage < excelPages; excelPage++)
             {
                 /* Set the active worksheet. */
-                worksheet = (Microsoft.Office.Interop.Excel._Worksheet)workbook.Sheets[excelPage + 1];
+                worksheet = (Worksheet)workbook.Sheets[excelPage + 1];
                 workbook.Sheets[excelPage + 1].Activate();
                 worksheet.get_Range("A1", "G1").Value2 = headerString;
 
@@ -533,8 +340,6 @@ namespace wagonMovement
             string savePath = @"S:\Corporate Strategy\Market Analysis & Forecasts\Volume\Wagon movement analysis";
 #endif
 
-            //string savePath = @"S:\Corporate Strategy\Market Analysis & Forecasts\Volume\Wagon movement analysis";
-            //string savePath = @"C:\Users\Beau\Documents\ARTC\Wagon Volumes";    // home path
             string saveFilename = savePath + @"\wagonDetails_" + DateTime.Now.ToString("yyyyMMdd") + ".xlsx";
 
             /* Check the file does not exist yet. */
@@ -543,60 +348,58 @@ namespace wagonMovement
 
             /* Save the excel file. */
             excel.UserControl = false;
-            workbook.SaveAs(saveFilename, Microsoft.Office.Interop.Excel.XlFileFormat.xlWorkbookDefault, Type.Missing, Type.Missing,
-                false, false, Microsoft.Office.Interop.Excel.XlSaveAsAccessMode.xlNoChange,
+            workbook.SaveAs(saveFilename, XlFileFormat.xlWorkbookDefault, Type.Missing, Type.Missing,
+                false, false, XlSaveAsAccessMode.xlNoChange,
                 Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing);
 
             workbook.Close();
 
             return;
         }
-
-
-
-
+        
         /// <summary>
         /// Write the volume data to an excel file for analysis.
         /// </summary>
         /// <param name="volume">The list of volume objects containing the final origin destination details.</param>
         public static void writeVolumeDataToExcel(List<volumeMovement> volume)
         {
-
+            /* Maximum number of rows in an excel worksheet is 1,048,576 (round down to a nice number) */
+            int maxExcelRows = 1048500;
+            
             /* Create the microsfot excel references. */
-            Microsoft.Office.Interop.Excel.Application excel;
-            Microsoft.Office.Interop.Excel._Workbook workbook;
-            Microsoft.Office.Interop.Excel._Worksheet worksheet;
-
-            /*Start Excel and get Application object. */
-            excel = new Microsoft.Office.Interop.Excel.Application();
+            Microsoft.Office.Interop.Excel.Application excel = new Microsoft.Office.Interop.Excel.Application();
+            Workbook workbook;
+            Worksheet worksheet;
 
             /* Get the reference to the new workbook. */
-            workbook = (Microsoft.Office.Interop.Excel._Workbook)(excel.Workbooks.Add(""));
+            workbook = (Workbook)(excel.Workbooks.Add(""));
 
             /* Create the header details. */
             string[] headerString = { "Wagon ID", "Origin", "Via", "Destination", "Weight" };
 
-            /* page size of the excel worksheet. */
-            int excelPageSize = 1000000;
+            /* Get the page size of the excel worksheet. */
+            int header = 2;
+            int excelPageSize = volume.Count()-1;
+            int excelPages = 1;
 
+            if (volume.Count() > maxExcelRows)
+            {
+                excelPageSize = 1000000;
+                excelPages = (int)Math.Round((double)volume.Count() / excelPageSize + 0.5);
+            }
+            
             /* Deconstruct the volume details into excel columns. */
             string[,] ID = new string[excelPageSize, 1];
             string[,] Orig = new string[excelPageSize, 1];
             string[,] Via = new string[excelPageSize, 1];
             string[,] Dest = new string[excelPageSize, 1];
-            //DateTime[,] attatch = new DateTime[excelPageSize, 1];
-            //DateTime[,] detatch = new DateTime[excelPageSize, 1];
             double[,] weight = new double[excelPageSize, 1];
-
-            /* Loop through the volume list to deconstruct the data. */
-            int excelPages = (int)Math.Round((double)volume.Count() / excelPageSize + 0.5);
-            int header = 2;
 
             /* Loop through the excel pages. */
             for (int excelPage = 0; excelPage < excelPages; excelPage++)
             {
                 /* Set the active worksheet. */
-                worksheet = (Microsoft.Office.Interop.Excel._Worksheet)workbook.Sheets[excelPage + 1];
+                worksheet = (Worksheet)workbook.Sheets[excelPage + 1];
                 workbook.Sheets[excelPage + 1].Activate();
                 worksheet.get_Range("A1", "E1").Value2 = headerString;
 
@@ -611,8 +414,6 @@ namespace wagonMovement
                         Orig[j, 0] = volume[checkIdx].Origin;
                         Via[j, 0] = volume[checkIdx].Via;
                         Dest[j, 0] = volume[checkIdx].Destination;
-                        //attatch[j, 0] = volume[checkIdx].attachmentTime;
-                        //detatch[j, 0] = volume[checkIdx].detachmentTime;
                         weight[j, 0] = volume[checkIdx].weight;
                     }
                     else
@@ -622,8 +423,6 @@ namespace wagonMovement
                         Orig[j, 0] = "";
                         Via[j, 0] = "";
                         Dest[j, 0] = "";
-                        //attatch[j, 0] = DateTime.MinValue;
-                        //detatch[j, 0] = DateTime.MinValue;
                         weight[j, 0] = 0;
                     }
                 }
@@ -634,8 +433,6 @@ namespace wagonMovement
                 worksheet.get_Range("C" + header, "C" + (header + excelPageSize)).Value2 = Via;
                 worksheet.get_Range("D" + header, "D" + (header + excelPageSize)).Value2 = Dest;
                 worksheet.get_Range("E" + header, "E" + (header + excelPageSize)).Value2 = weight;
-                //worksheet.get_Range("E" + header, "E" + (header + excelPageSize)).Value2 = attatch;
-                //worksheet.get_Range("F" + header, "F" + (header + excelPageSize)).Value2 = detatch;
 
             }
 
@@ -644,8 +441,7 @@ namespace wagonMovement
 #else
             string savePath = @"S:\Corporate Strategy\Market Analysis & Forecasts\Volume\Wagon movement analysis";
 #endif
-            //string savePath = @"S:\Corporate Strategy\Market Analysis & Forecasts\Volume\Wagon movement analysis";
-            //string savePath = @"C:\Users\Beau\Documents\ARTC\Wagon Volumes";    // home path
+
             string saveFilename = savePath + @"\volumeDetails_" + DateTime.Now.ToString("yyyyMMdd") + ".xlsx";
 
             /* Check the file does not exist yet. */
@@ -654,8 +450,8 @@ namespace wagonMovement
 
             /* Save the excel file. */
             excel.UserControl = false;
-            workbook.SaveAs(saveFilename, Microsoft.Office.Interop.Excel.XlFileFormat.xlWorkbookDefault, Type.Missing, Type.Missing,
-                false, false, Microsoft.Office.Interop.Excel.XlSaveAsAccessMode.xlNoChange,
+            workbook.SaveAs(saveFilename, XlFileFormat.xlWorkbookDefault, Type.Missing, Type.Missing,
+                false, false, XlSaveAsAccessMode.xlNoChange,
                 Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing);
 
             workbook.Close();
@@ -663,20 +459,21 @@ namespace wagonMovement
             return;
         }
 
-        //////////////////////////////////////////////////////////
-
-        public static List<volumeMovement> algorithm(List<wagonDetails> wagon)
+        /// <summary>
+        /// Join wagon movements based on wagon ID, planned destination and weight.
+        /// </summary>
+        /// <param name="wagon">A list of wagon movements.</param>
+        /// <returns>A list of volume movements</returns>
+        public static List<volumeMovement> combineWagonMovements(List<wagonDetails> wagon)
         {
-
-
-
+            /* Initialise teh volume list */
             List<volumeMovement> volume = new List<volumeMovement>();
             int searchIdx = 0;
-            //int volumeIdx = 0;
-
+            
+            /* search through all wagon movements */
             for (int recordIdx = 0; recordIdx < wagon.Count(); recordIdx++)
             {
-               
+                /* Create a new volume movement */
                 volumeMovement item = new volumeMovement(wagon[recordIdx]);
 
                 /* Wagon reached the planned destination without any intermediate stops. */
@@ -687,31 +484,27 @@ namespace wagonMovement
                 else
                 {
 
-                    /* The wagon was detatched at an intermediate location before continueing on to the planned destination. */
+                    /* The wagon was detatched at an intermediate location before continueing 
+                     * on to the planned destination. 
+                     */
 
                     /* Find the recordId, where the wagon reaches its planned destination. */
                     if ((recordIdx + 1) < wagon.Count())
                         searchIdx = recordIdx + 1;
-
-                    /*wagonDetails currentWagonMovement = new wagonDetails(wagon[recordIdx]);
-                    wagonDetails searchWagonMovement = new wagonDetails(wagon[searchIdx]);
-                    wagonDetails previousSearchWagonMovement = new wagonDetails(wagon[searchIdx-1]);
-                    */
-
-
+                    
                     while (!wagon[searchIdx].plannedDestination.Equals(wagon[searchIdx].destination))
                     {
+                        /* The volume has not reached the planned destination. */
+
                         if (wagon[searchIdx - 1].wagonID.Equals(wagon[searchIdx].wagonID) &&
                            !wagon[recordIdx].plannedDestination.Equals(wagon[searchIdx].plannedDestination) &&
                             wagon[recordIdx].attachmentTime < wagon[recordIdx - 1].attachmentTime)
                         {
                             /* Correct the apparent mismatch in locations where the time stamps seems to 
-                             * indicate that the wagon has been attatched to two trains simultaneously. */
+                             * indicate that the wagon has been attatched to two trains simultaneously. 
+                             */
 
                             /* Replace the origin location. */
-                            //item.Origin = wagon[recordIdx].origin;
-                            //volume.RemoveAt(volume.Count()-1);
-                            //volume.Add(item);
                             volume.Last().Origin = wagon[recordIdx].origin;
                             volume.Last().attachmentTime = wagon[recordIdx].attachmentTime;
                             searchIdx++;
@@ -736,7 +529,6 @@ namespace wagonMovement
                     } // while loop
 
                     /* The wagon has reached its planned destination. */
-                    //volumeMovement volumeItem = new volumeMovement(wagon[recordIdx].wagonID, wagon[recordIdx].origin, "", wagon[recordIdx].destination, wagon[recordIdx].netWeight);
                     item = new volumeMovement(wagon[recordIdx].wagonID, wagon[recordIdx].origin, "", wagon[recordIdx].destination, wagon[recordIdx].netWeight, wagon[recordIdx].attachmentTime, wagon[recordIdx].detachmentTime);
                     volume.Add(item);
 
@@ -816,9 +608,6 @@ namespace wagonMovement
                     recordIdx = searchIdx;
                 }
 
-                ///////
-                // try to do this in the fix function.
-
                 /* Check for time stamps that are wrong. */
                 // weight is the same, attach times are within 2 min, and attatch - detatch of next item is within 2 min.
                 double timeDifference = 1440.0;
@@ -836,10 +625,8 @@ namespace wagonMovement
                         recordIdx++;
                     }
                 }
-                ////////////
-
+                
                 /* Find the wagon movements that are continuations of the volumes. */
-
                 if (volume.Count() > 1)
                 {
                     /* It is assumed that any volume movement that is a continuation does not have a change in weight. */
@@ -856,17 +643,17 @@ namespace wagonMovement
                     }
                 }
 
-
-                /* Record the number of origin-destination pairs. */
-
-                /* Write the volume data to file for analysis. */
-            }
+                            }
 
             return volume;
         }
 
-
-        public static List<volumeMovement> fun(List<volumeMovement> volume)
+        /// <summary>
+        /// Combine apparent continuations of the volume movements.
+        /// </summary>
+        /// <param name="volume">Initial list of volume movements</param>
+        /// <returns>List of volume moevements</returns>
+        public static List<volumeMovement> combineVolumeMovements(List<volumeMovement> volume)
         {
             /* Create a new list of volumes that will be returned. */
             List<volumeMovement> newVolume = new List<volumeMovement>();
@@ -889,11 +676,6 @@ namespace wagonMovement
             /* loop through the existing volumes to see if any need to be combined. */
             for (volumeIdx = 0; volumeIdx < volume.Count() - 1; volumeIdx++)
             {
-                /*
-                int a = 0;
-                if (newVolume.Count() > 320)
-                    a = 1;
-                */
                 current = volumeIdx;
                 next = current + 1;
 
@@ -908,12 +690,14 @@ namespace wagonMovement
                     }
                 }
                 next--;
+                
                 /* This corrects for combining two wagon movements that are just return journeys with the same weight. */
                 if ((volume[next].attachmentTime - volume[current].detachmentTime).TotalMinutes > 4800)
                 {
                     /* If the last wagon movement in the journey is at least 2 or more movements later, then they should still be combined */
                     if (next - current > 1)
                         next++;
+
                     /* The next wagon movement should remain a seperate movement. */
                     if (next != current)
                         next--;
@@ -935,56 +719,19 @@ namespace wagonMovement
                 attachmentTime = volume[current].attachmentTime;
                 detachmentTime = volume[current].attachmentTime;
 
-                /* Correct the reversale of wagon movements. - maybe have a time check here */
-                /*    
-                if (Origin.Equals(Destination) &&
-                        (detachmentTime - attachmentTime).TotalMinutes < 1440)
-                    {
-                        Origin = volume[next].Origin;
-                        Via = volume[next].Destination;
-                        Destination = volume[current].Destination;
-                    }
-
-                */
-
                 /* Create the volume itme and add to the list. */
                 volumeMovement item = new volumeMovement(wagonID, Origin, Via, Destination, weight, attachmentTime, detachmentTime);
                 newVolume.Add(item);
-
-
-                //}
-                //else 
-                //{
-                //    wagonID = volume[current].wagonID;
-                //    Origin = volume[current].Origin;
-                //    if (volume[current].Via.Equals(volume[current].Destination))
-                //    {
-                //        Via = "";
-                //    }
-                //    else
-                //    {
-                //        Via = volume[current].Via;
-                //    }
-                //    Destination = volume[current].Destination;
-                //    weight = volume[current].weight;
-
-                //    volumeMovement item = new volumeMovement(wagonID, Origin, Via, Destination, weight);
-                //    newVolume.Add(item);
-                //    next--;
-                //}
-
+                
                 volumeIdx = next;
 
 
             }
             
             return newVolume;
-
-
+            
         }
-
-
-
+        
 
     } // end of program class
 
