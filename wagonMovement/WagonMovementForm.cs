@@ -90,7 +90,7 @@ namespace wagonMovement
                 if (destinationDirectory == null || destinationDirectory.Equals("<Default>"))
                     destinationDirectory.Text = defaultDirectory;
 
-                /* Validate the dat file and process the data. */
+                /* Validate the data file and process the data. */
                 if (File.Exists(dataFile))
                     Algorithm.processWagonMovements(dataFile, destination);
 
@@ -101,7 +101,7 @@ namespace wagonMovement
                 /* When asynchronous execution complete, reset the timer counter and stop the clock. */
                 timeCounter = 0;
                 stopTheClock = true;
-
+                Tools.messageBox("Program Complete", "Finished Execution");
             };
 
             background.RunWorkerAsync();
