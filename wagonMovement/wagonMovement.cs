@@ -53,6 +53,7 @@ namespace wagonMovement
                 }
             }
 
+            wagon = wagon.OrderBy(w => w.wagonID).ThenBy(w => w.netWeight).ThenBy(w => w.attachmentTime).ToList();
             /* Combine the wagon movements based on planned destination and weights. */
             List<volumeMovement> volume = new List<volumeMovement>();
             volume = combineWagonMovements(wagon);
