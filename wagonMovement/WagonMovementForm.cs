@@ -45,7 +45,7 @@ namespace wagonMovement
         private void SelectDataFile_Click(object sender, EventArgs e)
         {
             /* Browse the file system for the desrired file. */
-            dataFile = Tools.selectDataFile();
+            dataFile = Tools.selectDataFile(initialDirectory: defaultDirectory);
 
             if (dataFile == null)
             {

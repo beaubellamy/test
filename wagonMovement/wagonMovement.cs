@@ -53,6 +53,7 @@ namespace wagonMovement
                 }
             }
 
+            /* Sort the wagon data to ensure all similar wagon IDs are consecutive. */
             wagon = wagon.OrderBy(w => w.wagonID).ThenBy(w => w.netWeight).ThenBy(w => w.attachmentTime).ToList();
             /* Combine the wagon movements based on planned destination and weights. */
             List<volumeMovement> volume = new List<volumeMovement>();
