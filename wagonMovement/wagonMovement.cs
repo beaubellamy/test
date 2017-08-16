@@ -54,7 +54,7 @@ namespace wagonMovement
             }
 
             /* Sort the wagon data to ensure all similar wagon IDs are consecutive. */
-            wagon = wagon.OrderBy(w => w.wagonID).ThenBy(w => w.netWeight).ThenBy(w => w.attachmentTime).ToList();
+            wagon = wagon.OrderBy(w => w.wagonID).ThenBy(w => w.attachmentTime).ThenBy(w => w.netWeight).ToList();
             /* Combine the wagon movements based on planned destination and weights. */
             List<volumeMovement> volume = new List<volumeMovement>();
             volume = combineWagonMovements(wagon);
@@ -77,7 +77,7 @@ namespace wagonMovement
         /// <returns>A list of volume movements</returns>
         private static List<volumeMovement> combineWagonMovements(List<wagonDetails> wagon)
         {
-            /* Initialise teh volume list */
+            /* Initialise the volume list */
             List<volumeMovement> volume = new List<volumeMovement>();
             int searchIdx = 0;
 
@@ -290,12 +290,17 @@ namespace wagonMovement
             DateTime detachmentTime = new DateTime(2000, 1, 1);
 
             double weight = 0;
+            int a = 0;
 
             /* loop through the existing volumes to see if any need to be combined. */
             for (volumeIdx = 0; volumeIdx < volume.Count() - 1; volumeIdx++)
             {
+               
                 current = volumeIdx;
                 next = current + 1;
+
+                // Check the dates arent too far apart or planned = destiantion
+                // is this what happens next (code block after)
 
                 /* Locate the last volume movement that is equal */
                 while (volume[current].weight == volume[next].weight &&
@@ -310,7 +315,8 @@ namespace wagonMovement
                 next--;
 
                 /* This corrects for combining two wagon movements that are just return journeys with the same weight. */
-                if ((volume[next].attachmentTime - volume[current].detachmentTime).TotalMinutes > 4800)
+                //if ((volume[next].attachmentTime - volume[current].detachmentTime).TotalMinutes > 4800)
+                if (volume[current].Origin[0].Equals(volume[next].Destination[0]))
                 {
                     /* If the last wagon movement in the journey is at least 2 or more movements later, then they should still be combined */
                     if (next - current > 1)
@@ -397,7 +403,7 @@ namespace wagonMovement
                 /* Seperate each record into each field */
                 fields = line.Split(delimeters);
 
-                /* ignore teh first two lines as header information. */
+                /* ignore the first two lines as header information. */
                 if (headerCount >= 2)
                     if (!FileOperations.locationDictioanry.ContainsKey(fields[0]))
                         FileOperations.locationDictioanry.Add(fields[0], new List<string> { fields[3], fields[4], fields[5] });
