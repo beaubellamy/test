@@ -35,6 +35,10 @@
             this.destinationDirectoryButton = new System.Windows.Forms.Button();
             this.destinationDirectory = new System.Windows.Forms.TextBox();
             this.TimerLabel = new System.Windows.Forms.Label();
+            this.formFromDate = new System.Windows.Forms.DateTimePicker();
+            this.formToDate = new System.Windows.Forms.DateTimePicker();
+            this.fromLabel = new System.Windows.Forms.Label();
+            this.toLabel = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // wagonFile
@@ -102,11 +106,51 @@
             this.TimerLabel.TabIndex = 7;
             this.TimerLabel.Text = "Execution Time:";
             // 
+            // formFromDate
+            // 
+            this.formFromDate.Format = System.Windows.Forms.DateTimePickerFormat.Short;
+            this.formFromDate.Location = new System.Drawing.Point(173, 13);
+            this.formFromDate.Name = "formFromDate";
+            this.formFromDate.Size = new System.Drawing.Size(105, 20);
+            this.formFromDate.TabIndex = 8;
+            this.formFromDate.Value = new System.DateTime(2016, 7, 1, 0, 0, 0, 0);
+            // 
+            // formToDate
+            // 
+            this.formToDate.Format = System.Windows.Forms.DateTimePickerFormat.Short;
+            this.formToDate.Location = new System.Drawing.Point(318, 13);
+            this.formToDate.Name = "formToDate";
+            this.formToDate.Size = new System.Drawing.Size(99, 20);
+            this.formToDate.TabIndex = 9;
+            this.formToDate.Value = new System.DateTime(2017, 7, 1, 0, 0, 0, 0);
+            // 
+            // fromLabel
+            // 
+            this.fromLabel.AutoSize = true;
+            this.fromLabel.Location = new System.Drawing.Point(131, 19);
+            this.fromLabel.Name = "fromLabel";
+            this.fromLabel.Size = new System.Drawing.Size(33, 13);
+            this.fromLabel.TabIndex = 10;
+            this.fromLabel.Text = "From:";
+            // 
+            // toLabel
+            // 
+            this.toLabel.AutoSize = true;
+            this.toLabel.Location = new System.Drawing.Point(289, 19);
+            this.toLabel.Name = "toLabel";
+            this.toLabel.Size = new System.Drawing.Size(23, 13);
+            this.toLabel.TabIndex = 11;
+            this.toLabel.Text = "To:";
+            // 
             // WagonMovementForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(823, 233);
+            this.Controls.Add(this.toLabel);
+            this.Controls.Add(this.fromLabel);
+            this.Controls.Add(this.formToDate);
+            this.Controls.Add(this.formFromDate);
             this.Controls.Add(this.TimerLabel);
             this.Controls.Add(this.destinationDirectory);
             this.Controls.Add(this.destinationDirectoryButton);
@@ -130,5 +174,9 @@
         private System.Windows.Forms.Button destinationDirectoryButton;
         private System.Windows.Forms.TextBox destinationDirectory;
         private System.Windows.Forms.Label TimerLabel;
+        private System.Windows.Forms.DateTimePicker formFromDate;
+        private System.Windows.Forms.DateTimePicker formToDate;
+        private System.Windows.Forms.Label fromLabel;
+        private System.Windows.Forms.Label toLabel;
     }
 }
