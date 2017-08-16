@@ -18,7 +18,11 @@ namespace wagonMovement
         /* Default file and directory values. */
         string dataFile = null;
         string defaultDirectory = @"S:\Corporate Strategy\Market Analysis & Forecasts\Volume\Wagon movement analysis";
-        
+        /* Default values for the analysis period */
+        static DateTime fromDate = DateTime.MinValue;
+        static DateTime toDate = DateTime.MaxValue;
+
+
         /* Constant time factors. */
         public const double secPerHour = 3600;
         public const double minutesPerHour = 60;
@@ -90,9 +94,12 @@ namespace wagonMovement
                 if (destinationDirectory == null || destinationDirectory.Equals("<Default>"))
                     destinationDirectory.Text = defaultDirectory;
 
+                /* Set the date range */
+                setDateRange();
+
                 /* Validate the data file and process the data. */
                 if (File.Exists(dataFile))
-                    Algorithm.processWagonMovements(dataFile, destination);
+                    Algorithm.processWagonMovements(dataFile, destination, fromDate, toDate);
 
             };
 
@@ -152,6 +159,16 @@ namespace wagonMovement
 
         }
 
+        /// <summary>
+        /// Set the data range for the analysis period.
+        /// </summary>
+        void setDateRange()
+        {
+            /* Set the static date values as date only. */
+            fromDate = formFromDate.Value.Date;
+            toDate = formToDate.Value.Date;
+        }
+       
         
 
         

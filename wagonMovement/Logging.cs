@@ -28,7 +28,6 @@ namespace wagonMovement
         public Logging()
         {
             string path = @"S:\Corporate Strategy\Market Analysis & Forecasts\Volume\Wagon movement analysis\Wagon Movement Source\";
-            //string path = @"C:\Users\Beau\Documents\ARTC\Wagon Volumes\";      // Home location
             logFilename = path + "log_" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".csv";
             openFileForWriting();
         }
