@@ -305,9 +305,11 @@ namespace wagonMovement
 
                 // Check the dates arent too far apart or planned = destiantion
                 // is this what happens next (code block after)
+                
+                // weight threshold is 100 kg
 
                 /* Locate the last volume movement that is equal */
-                while (volume[current].weight == volume[next].weight &&
+                while (Math.Abs(volume[current].weight - volume[next].weight) < 0.05 &&
                        volume[current].weight > 0)
                 {
                     next++;
