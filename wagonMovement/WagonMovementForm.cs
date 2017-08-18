@@ -168,6 +168,42 @@ namespace wagonMovement
             fromDate = formFromDate.Value.Date;
             toDate = formToDate.Value.Date;
         }
+
+        /// <summary>
+        /// If the financial year box is checked then, set the date range to the last full financial year
+        /// </summary>
+        /// <param name="sender">The object container.</param>
+        /// <param name="e">The event arguments.</param>
+        private void financialYear_CheckedChanged(object sender, EventArgs e)
+        {
+            DateTime today = DateTime.Today;
+            DateTime startFinancialYear = DateTime.MinValue;
+            DateTime endFinancialYear = DateTime.MaxValue;
+
+            int year = today.Year;
+
+            /* Determine the last financial year that is complete. */
+            if (today.Month > 6)
+            {
+                startFinancialYear = new DateTime(today.Year - 1, 7, 1);
+                endFinancialYear = new DateTime(today.Year, 7, 1);
+            }
+            else
+            {
+                startFinancialYear = new DateTime(today.Year - 2, 7, 1);
+                endFinancialYear = new DateTime(today.Year-1, 7, 1);            
+            }
+
+            /* If analysisng the financial year, automatically populate the 
+             * date range to be the latest full financial year. 
+             */
+            if (financialYear.Checked)
+            {
+                formFromDate.Value = startFinancialYear;
+                formToDate.Value = endFinancialYear;
+            }
+                   
+        }
        
         
 

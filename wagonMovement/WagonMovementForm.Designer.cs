@@ -39,6 +39,7 @@
             this.formToDate = new System.Windows.Forms.DateTimePicker();
             this.fromLabel = new System.Windows.Forms.Label();
             this.toLabel = new System.Windows.Forms.Label();
+            this.financialYear = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // wagonFile
@@ -142,11 +143,23 @@
             this.toLabel.TabIndex = 11;
             this.toLabel.Text = "To:";
             // 
+            // financialYear
+            // 
+            this.financialYear.AutoSize = true;
+            this.financialYear.Location = new System.Drawing.Point(459, 15);
+            this.financialYear.Name = "financialYear";
+            this.financialYear.Size = new System.Drawing.Size(93, 17);
+            this.financialYear.TabIndex = 12;
+            this.financialYear.Text = "Financial Year";
+            this.financialYear.UseVisualStyleBackColor = true;
+            this.financialYear.CheckedChanged += new System.EventHandler(this.financialYear_CheckedChanged);
+            // 
             // WagonMovementForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(823, 233);
+            this.Controls.Add(this.financialYear);
             this.Controls.Add(this.toLabel);
             this.Controls.Add(this.fromLabel);
             this.Controls.Add(this.formToDate);
@@ -178,5 +191,6 @@
         private System.Windows.Forms.DateTimePicker formToDate;
         private System.Windows.Forms.Label fromLabel;
         private System.Windows.Forms.Label toLabel;
+        private System.Windows.Forms.CheckBox financialYear;
     }
 }
