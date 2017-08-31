@@ -40,6 +40,7 @@
             this.fromLabel = new System.Windows.Forms.Label();
             this.toLabel = new System.Windows.Forms.Label();
             this.financialYear = new System.Windows.Forms.CheckBox();
+            this.GrossTonnes = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // wagonFile
@@ -154,11 +155,23 @@
             this.financialYear.UseVisualStyleBackColor = true;
             this.financialYear.CheckedChanged += new System.EventHandler(this.financialYear_CheckedChanged);
             // 
+            // GrossTonnes
+            // 
+            this.GrossTonnes.AutoSize = true;
+            this.GrossTonnes.Location = new System.Drawing.Point(575, 15);
+            this.GrossTonnes.Name = "GrossTonnes";
+            this.GrossTonnes.Size = new System.Drawing.Size(92, 17);
+            this.GrossTonnes.TabIndex = 13;
+            this.GrossTonnes.Text = "Gross Tonnes";
+            this.GrossTonnes.UseVisualStyleBackColor = true;
+            this.GrossTonnes.CheckedChanged += new System.EventHandler(this.GrossTonnes_CheckedChanged);
+            // 
             // WagonMovementForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(823, 233);
+            this.Controls.Add(this.GrossTonnes);
             this.Controls.Add(this.financialYear);
             this.Controls.Add(this.toLabel);
             this.Controls.Add(this.fromLabel);
@@ -192,5 +205,6 @@
         private System.Windows.Forms.Label fromLabel;
         private System.Windows.Forms.Label toLabel;
         private System.Windows.Forms.CheckBox financialYear;
+        private System.Windows.Forms.CheckBox GrossTonnes;
     }
 }

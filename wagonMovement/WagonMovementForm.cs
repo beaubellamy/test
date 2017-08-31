@@ -21,7 +21,7 @@ namespace wagonMovement
         /* Default values for the analysis period */
         static DateTime fromDate = DateTime.MinValue;
         static DateTime toDate = DateTime.MaxValue;
-
+        static bool grossTonnes = false;
 
         /* Constant time factors. */
         public const double secPerHour = 3600;
@@ -96,10 +96,10 @@ namespace wagonMovement
 
                 /* Set the date range */
                 setDateRange();
-
+                
                 /* Validate the data file and process the data. */
                 if (File.Exists(dataFile))
-                    Algorithm.processWagonMovements(dataFile, destination, fromDate, toDate);
+                    Algorithm.processWagonMovements(dataFile, destination, fromDate, toDate, grossTonnes);
 
             };
 
@@ -203,6 +203,15 @@ namespace wagonMovement
                 formToDate.Value = endFinancialYear;
             }
                    
+        }
+
+        private void GrossTonnes_CheckedChanged(object sender, EventArgs e)
+        {
+            /* If Culleran Ranges tesging flag is checked, set the appropriate parameters. */
+            if (GrossTonnes.Checked)
+                grossTonnes = true;
+            else
+                grossTonnes = false;
         }
        
         
