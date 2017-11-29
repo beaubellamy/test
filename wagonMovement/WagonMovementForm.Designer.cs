@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(WagonMovementForm));
             this.wagonFile = new System.Windows.Forms.TextBox();
             this.SelectFileButton = new System.Windows.Forms.Button();
             this.ProcessButton = new System.Windows.Forms.Button();
@@ -184,6 +185,7 @@
             this.Controls.Add(this.ProcessButton);
             this.Controls.Add(this.SelectFileButton);
             this.Controls.Add(this.wagonFile);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "WagonMovementForm";
             this.Text = "WagonMovementForm";
             this.ResumeLayout(false);
