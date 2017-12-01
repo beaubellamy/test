@@ -144,7 +144,9 @@ namespace wagonMovement
                     } // while loop
 
                     /* The wagon has reached its planned destination. */
-                    item = new volumeMovement(wagon[recordIdx].wagonID, wagon[recordIdx].origin, "", wagon[recordIdx].destination, wagon[recordIdx].netWeight, wagon[recordIdx].attachmentTime, wagon[recordIdx].detachmentTime);
+                    item = new volumeMovement(wagon[recordIdx].TrainID, wagon[recordIdx].trainOperator, wagon[recordIdx].commodity, wagon[recordIdx].wagonID, 
+                        wagon[recordIdx].origin, "", wagon[recordIdx].destination, wagon[recordIdx].netWeight, wagon[recordIdx].grossWeight, 
+                        wagon[recordIdx].attachmentTime, wagon[recordIdx].detachmentTime);
                     volume.Add(item);
 
 
@@ -175,7 +177,9 @@ namespace wagonMovement
                                     volume.Last().Destination[0] = wagon[searchIdx].destination;   // was [index]
                                     volume.Last().detachmentTime = wagon[searchIdx].detachmentTime;
 
-                                    item = new volumeMovement(wagon[recordIdx].wagonID, wagon[index].origin, "", wagon[searchIdx].destination, wagon[index].netWeight - wagon[recordIdx].netWeight, wagon[index].attachmentTime, wagon[searchIdx].detachmentTime);
+                                    item = new volumeMovement(wagon[recordIdx].TrainID, wagon[recordIdx].trainOperator, wagon[recordIdx].commodity, wagon[recordIdx].wagonID,
+                                        wagon[index].origin, "", wagon[searchIdx].destination, wagon[index].netWeight - wagon[recordIdx].netWeight, wagon[recordIdx].grossWeight, 
+                                        wagon[index].attachmentTime, wagon[searchIdx].detachmentTime);
                                     volume.Add(item);
 
                                 }
@@ -184,9 +188,11 @@ namespace wagonMovement
                                     /* Weight has been removed at the intermediate destination. */
                                     volume.Last().Destination[0] = wagon[index].destination;   // was [index]
                                     volume.Last().detachmentTime = wagon[index].detachmentTime;
-                                    volume.Last().weight = wagon[index].netWeight;
+                                    volume.Last().netWeight = wagon[index].netWeight;
 
-                                    item = new volumeMovement(wagon[recordIdx].wagonID, wagon[recordIdx].origin, "", wagon[recordIdx].destination, wagon[recordIdx].netWeight - wagon[index].netWeight, wagon[recordIdx].attachmentTime, wagon[recordIdx].detachmentTime);
+                                    item = new volumeMovement(wagon[recordIdx].TrainID, wagon[recordIdx].trainOperator, wagon[recordIdx].commodity, wagon[recordIdx].wagonID,
+                                        wagon[recordIdx].origin, "", wagon[recordIdx].destination, wagon[recordIdx].netWeight - wagon[index].netWeight, wagon[recordIdx].grossWeight,
+                                        wagon[recordIdx].attachmentTime, wagon[recordIdx].detachmentTime);
                                     volume.Add(item);
                                 }
                             }
@@ -248,8 +254,8 @@ namespace wagonMovement
                     if (volume.Last().wagonID.Equals(volume[volume.Count() - 2].wagonID) &&
                         volume.Last().Origin.Equals(volume[volume.Count() - 2].Destination) &&
                         !volume.Last().Destination.Equals(volume[volume.Count() - 2].Origin) &&
-                        volume.Last().weight == volume[volume.Count() - 2].weight &&
-                        volume.Last().weight > 0)
+                        volume.Last().netWeight == volume[volume.Count() - 2].netWeight &&
+                        volume.Last().netWeight > 0)
                     {
                         /* Update the previous volume destination. */
                         int previousIdx = volume.Count() - 2;   // maybe -1
@@ -280,7 +286,10 @@ namespace wagonMovement
 
             /* Initialise the wagon strings. */
             List<string> dictionary = null;
+            string trainID = "";
             string wagonID = "";
+            trainOperator trainOperator = trainOperator.Unknown;
+            trainCommodity commodity = trainCommodity.Unknown;
 
             string Origin = "";
             List<string> originLocation = new List<string>();
@@ -293,7 +302,9 @@ namespace wagonMovement
             DateTime attachmentTime = new DateTime(2000, 1, 1);
             DateTime detachmentTime = new DateTime(2000, 1, 1);
 
-            double weight = 0;
+            double netWeight = 0;
+            double grossWeight = 0;
+
             int a = 0;
 
             /* loop through the existing volumes to see if any need to be combined. */
@@ -309,8 +320,8 @@ namespace wagonMovement
                 // weight threshold is 100 kg
 
                 /* Locate the last volume movement that is equal */
-                while (Math.Abs(volume[current].weight - volume[next].weight) < 0.05 &&
-                       volume[current].weight > 0)
+                while (Math.Abs(volume[current].netWeight - volume[next].netWeight) < 0.05 &&
+                       volume[current].netWeight > 0)
                 {
                     next++;
                     if (next == volume.Count())
@@ -333,8 +344,12 @@ namespace wagonMovement
                         next--;
                 }
 
-                /* Populate the volume strings with the required details. */
+                /* Populate the volume properties with the required details. */
                 wagonID = volume[current].wagonID;
+                trainID = volume[current].trainID;
+                trainOperator = volume[current].trainOperator;
+                commodity = volume[current].commodity;
+
                 Origin = volume[current].Origin[0];
                 if (volume[current].Via.Equals(volume[next].Via))
                 {
@@ -345,7 +360,8 @@ namespace wagonMovement
                     Via = volume[next].Origin[0];
                 }
                 Destination = volume[next].Destination[0];
-                weight = volume[current].weight;
+                netWeight = volume[current].netWeight;
+                grossWeight = volume[current].grossWeight;
                 attachmentTime = volume[current].attachmentTime;
                 detachmentTime = volume[current].attachmentTime;
 
@@ -372,7 +388,8 @@ namespace wagonMovement
                     destinationLocation = new List<string> { Destination, "Unknown Region", "Unknown State" };
 
                 /* Create the volume itme and add to the list. */
-                volumeMovement item = new volumeMovement(wagonID, originLocation, viaLocation, destinationLocation, weight, attachmentTime, detachmentTime);
+                volumeMovement item = new volumeMovement(trainID, trainOperator, commodity, wagonID, originLocation, viaLocation, destinationLocation, 
+                    netWeight, grossWeight, attachmentTime, detachmentTime);
                 newVolume.Add(item);
 
                 volumeIdx = next;
