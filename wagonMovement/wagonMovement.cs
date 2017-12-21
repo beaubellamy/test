@@ -304,9 +304,7 @@ namespace wagonMovement
 
             double netWeight = 0;
             double grossWeight = 0;
-
-            int a = 0;
-
+            
             /* loop through the existing volumes to see if any need to be combined. */
             for (volumeIdx = 0; volumeIdx < volume.Count() - 1; volumeIdx++)
             {

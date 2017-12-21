@@ -149,9 +149,9 @@
             this.financialYear.AutoSize = true;
             this.financialYear.Location = new System.Drawing.Point(459, 15);
             this.financialYear.Name = "financialYear";
-            this.financialYear.Size = new System.Drawing.Size(93, 17);
+            this.financialYear.Size = new System.Drawing.Size(116, 17);
             this.financialYear.TabIndex = 12;
-            this.financialYear.Text = "Financial Year";
+            this.financialYear.Text = "Last Financial Year";
             this.financialYear.UseVisualStyleBackColor = true;
             this.financialYear.CheckedChanged += new System.EventHandler(this.financialYear_CheckedChanged);
             // 

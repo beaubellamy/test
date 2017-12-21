@@ -190,7 +190,7 @@ namespace wagonMovement
             else
             {
                 startFinancialYear = new DateTime(today.Year - 2, 7, 1);
-                endFinancialYear = new DateTime(today.Year-1, 7, 1);            
+                endFinancialYear = new DateTime(today.Year + 1, 7, 1);            
             }
 
             /* If analysisng the financial year, automatically populate the 
