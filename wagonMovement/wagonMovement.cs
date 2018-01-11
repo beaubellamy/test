@@ -35,7 +35,7 @@ namespace wagonMovement
         /// Process the wagon movements into individual volume movements.
         /// </summary>
         /// <param name="filename">Filename of the wagon data.</param>
-        public static void processWagonMovements(string filename, string destinationFolder, DateTime fromDate, DateTime toDate, bool grossTonnes = false)
+        public static void processWagonMovements(string filename, string destinationFolder, DateTime fromDate, DateTime toDate)
         {
             /* Create the Wagon list. */
             List<wagonDetails> wagon = new List<wagonDetails>();
@@ -43,7 +43,7 @@ namespace wagonMovement
             /* Populate the wagon list with the data from the data file. */
             try
             {
-                wagon = FileOperations.readWagonDataFile(filename, grossTonnes);
+                wagon = FileOperations.readWagonDataFile(filename);
                 /* Extract the data for the date range. */
                 wagon = wagon.Where(w => w.trainDate >= fromDate).Where(w => w.trainDate < toDate).ToList();
 
@@ -69,7 +69,8 @@ namespace wagonMovement
 
             /* Write the wagon details to excel. */
             FileOperations.writeWagonData(wagon, destinationFolder);
-            FileOperations.writeVolumeData(volume, destinationFolder);
+            //FileOperations.writeVolumeData(volume, destinationFolder);
+            FileOperations.writeVolumeDataByCommodity(volume, destinationFolder);
 
 
         }
@@ -304,9 +305,7 @@ namespace wagonMovement
 
             double netWeight = 0;
             double grossWeight = 0;
-
-            int a = 0;
-
+            
             /* loop through the existing volumes to see if any need to be combined. */
             for (volumeIdx = 0; volumeIdx < volume.Count() - 1; volumeIdx++)
             {
