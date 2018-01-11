@@ -69,7 +69,8 @@ namespace wagonMovement
 
             /* Write the wagon details to excel. */
             FileOperations.writeWagonData(wagon, destinationFolder);
-            FileOperations.writeVolumeData(volume, destinationFolder);
+            //FileOperations.writeVolumeData(volume, destinationFolder);
+            FileOperations.writeVolumeDataByCommodity(volume, destinationFolder);
 
 
         }

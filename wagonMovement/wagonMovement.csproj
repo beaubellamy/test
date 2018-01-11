@@ -55,8 +55,7 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="IOLibrary, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="IOLibrary">
       <HintPath>..\..\..\..\..\Infrastructure Strategies\Simulations\Software Libraries\IOLibrary\IOLibrary\bin\x64\Debug\IOLibrary.dll</HintPath>
     </Reference>
     <Reference Include="System" />
