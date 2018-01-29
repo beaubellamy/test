@@ -364,27 +364,27 @@ namespace wagonMovement
                 attachmentTime = volume[current].attachmentTime;
                 detachmentTime = volume[current].attachmentTime;
 
-                if (FileOperations.locationDictioanry.TryGetValue(Origin, out dictionary))
-                    originLocation = new List<string> { dictionary[0], dictionary[1], dictionary[2] };
+                if (FileOperations.locationDictionary.TryGetValue(Origin, out dictionary))
+                    originLocation = new List<string> { dictionary[0], dictionary[1], dictionary[2], dictionary[3] };
                 else
-                    originLocation = new List<string> { Origin, "Unknown Region", "Unknown State" };
+                    originLocation = new List<string> { Origin, "Unknown Region", "Unknown State", "Unknown Area" };
 
                 if (Via != "")
                 {
-                    if (FileOperations.locationDictioanry.TryGetValue(Via, out dictionary))
-                        viaLocation = new List<string> { dictionary[0], dictionary[1], dictionary[2] };
+                    if (FileOperations.locationDictionary.TryGetValue(Via, out dictionary))
+                        viaLocation = new List<string> { dictionary[0], dictionary[1], dictionary[2], dictionary[3] };
                     else
-                        viaLocation = new List<string> { Via, "Unknown Region", "Unknown State" };
+                        viaLocation = new List<string> { Via, "Unknown Region", "Unknown State", "Unknown Area" };
                 }
                 else
                 {
-                    viaLocation = new List<string> { "", "", "" };
+                    viaLocation = new List<string> { "", "", "", "" };
                 }
 
-                if (FileOperations.locationDictioanry.TryGetValue(Destination, out dictionary))
-                    destinationLocation = new List<string> { dictionary[0], dictionary[1], dictionary[2] };
+                if (FileOperations.locationDictionary.TryGetValue(Destination, out dictionary))
+                    destinationLocation = new List<string> { dictionary[0], dictionary[1], dictionary[2], dictionary[3] };
                 else
-                    destinationLocation = new List<string> { Destination, "Unknown Region", "Unknown State" };
+                    destinationLocation = new List<string> { Destination, "Unknown Region", "Unknown State", "Unknown Area" };
 
                 /* Create the volume itme and add to the list. */
                 volumeMovement item = new volumeMovement(trainID, trainOperator, commodity, wagonID, originLocation, viaLocation, destinationLocation, 
@@ -427,8 +427,15 @@ namespace wagonMovement
 
                 /* ignore the first two lines as header information. */
                 if (headerCount >= 2)
-                    if (!FileOperations.locationDictioanry.ContainsKey(fields[0]))
-                        FileOperations.locationDictioanry.Add(fields[0], new List<string> { fields[3], fields[4], fields[5] });
+                    if (!FileOperations.locationDictionary.ContainsKey(fields[0]))
+                        FileOperations.locationDictionary.Add(fields[0], new List<string> { fields[3], fields[4], fields[5], fields[15] });
+
+                /*
+                 * 3:  Location
+                 * 4:  SA4 Region
+                 * 5:  State
+                 * 15: Location Area
+                 */
 
                 headerCount++;
             }
