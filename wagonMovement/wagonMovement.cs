@@ -64,6 +64,9 @@ namespace wagonMovement
             volume = combineWagonMovements(wagon);
 
             readGeoLocationCodes();
+            
+            populateLocations(volume);
+            
             /* Combine the volume movements that appear to be continuations of the same wagon. */
             volume = combineVolumeMovements(volume);
 
@@ -252,14 +255,14 @@ namespace wagonMovement
                 if (volume.Count() > 1)
                 {
                     /* It is assumed that any volume movement that is a continuation does not have a change in weight. */
-                    if (volume.Last().wagonID.Equals(volume[volume.Count() - 2].wagonID) &&
-                        volume.Last().Origin.Equals(volume[volume.Count() - 2].Destination) &&
-                        !volume.Last().Destination.Equals(volume[volume.Count() - 2].Origin) &&
-                        volume.Last().netWeight == volume[volume.Count() - 2].netWeight &&
+                    if (volume.Last().wagonID.Equals(volume[volume.Count() - 1].wagonID) &&
+                        volume.Last().Origin.Equals(volume[volume.Count() - 1].Destination) &&
+                        !volume.Last().Destination.Equals(volume[volume.Count() - 1].Origin) &&
+                        volume.Last().netWeight == volume[volume.Count() - 1].netWeight &&
                         volume.Last().netWeight > 0)
                     {
                         /* Update the previous volume destination. */
-                        int previousIdx = volume.Count() - 2;   // maybe -1
+                        int previousIdx = volume.Count() - 1;   // maybe -1
                         volume[previousIdx].Via = volume[previousIdx].Destination;
                         volume[previousIdx].Destination = volume.Last().Destination;
                     }
@@ -362,7 +365,7 @@ namespace wagonMovement
                 netWeight = volume[current].netWeight;
                 grossWeight = volume[current].grossWeight;
                 attachmentTime = volume[current].attachmentTime;
-                detachmentTime = volume[current].attachmentTime;
+                detachmentTime = volume[current].detachmentTime;
 
                 if (FileOperations.locationDictionary.TryGetValue(Origin, out dictionary))
                     originLocation = new List<string> { dictionary[0], dictionary[1], dictionary[2], dictionary[3] };
@@ -442,7 +445,52 @@ namespace wagonMovement
             
         }
 
+        /// <summary>
+        /// Mapp the location codes to the location name, states and regions.
+        /// This function must be called after readGeoLocationCodes() to 
+        /// ensure the dictioanry elements have been populated.
+        /// </summary>
+        /// <param name="volume">A list of volume objects that require location mapping</param>
+        /// <returns>The resuling list of volume objects with the location codes mapped to location names, states and regions.</returns>
+        public static List<volumeMovement> populateLocations(List<volumeMovement> volume)
+        {
+            /* The original location code is retained in the first list location to allow the 
+             * mapping to be performed again in the final continuation function, where the 
+             * locations can change. 
+             */
 
+            List<string> dictionary = new List<string>();
+
+            foreach (volumeMovement item in volume)
+            {
+                /* Map the Origin location code. */
+                if (FileOperations.locationDictionary.TryGetValue(item.Origin[0], out dictionary))
+                    item.Origin = new List<string> { item.Origin[0], dictionary[1], dictionary[2], dictionary[3] };
+                else
+                    item.Origin = new List<string> { item.Origin[0], "Unknown Region", "Unknown State", "Unknown Area" };
+
+                /* Map the Intermediate location code. */
+                if (item.Via[0] != "")
+                {
+                    if (FileOperations.locationDictionary.TryGetValue(item.Via[0], out dictionary))
+                        item.Via = new List<string> { item.Via[0], dictionary[1], dictionary[2], dictionary[3] };
+                    else
+                        item.Via = new List<string> { item.Via[0], "Unknown Region", "Unknown State", "Unknown Area" };
+                }
+                else
+                {
+                    item.Via = new List<string> { "", "", "", "" };
+                }
+
+                /* Map the Destination location code. */
+                if (FileOperations.locationDictionary.TryGetValue(item.Destination[0], out dictionary))
+                    item.Destination = new List<string> { item.Destination[0], dictionary[1], dictionary[2], dictionary[3] };
+                else
+                    item.Destination = new List<string> { item.Destination[0], "Unknown Region", "Unknown State", "Unknown Area" };
+            }
+
+            return volume;
+        }
     } // end of program class
 
 } // end of namespace
