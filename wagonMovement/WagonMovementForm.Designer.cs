@@ -41,6 +41,7 @@
             this.fromLabel = new System.Windows.Forms.Label();
             this.toLabel = new System.Windows.Forms.Label();
             this.financialYear = new System.Windows.Forms.CheckBox();
+            this.volumeModelFlag = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // wagonFile
@@ -155,11 +156,23 @@
             this.financialYear.UseVisualStyleBackColor = true;
             this.financialYear.CheckedChanged += new System.EventHandler(this.financialYear_CheckedChanged);
             // 
+            // volumeModelFlag
+            // 
+            this.volumeModelFlag.AutoSize = true;
+            this.volumeModelFlag.Location = new System.Drawing.Point(605, 15);
+            this.volumeModelFlag.Name = "volumeModelFlag";
+            this.volumeModelFlag.Size = new System.Drawing.Size(93, 17);
+            this.volumeModelFlag.TabIndex = 13;
+            this.volumeModelFlag.Text = "Volume Model";
+            this.volumeModelFlag.UseVisualStyleBackColor = true;
+            this.volumeModelFlag.CheckedChanged += new System.EventHandler(this.volumeModelFlag_CheckedChanged);
+            // 
             // WagonMovementForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(823, 233);
+            this.Controls.Add(this.volumeModelFlag);
             this.Controls.Add(this.financialYear);
             this.Controls.Add(this.toLabel);
             this.Controls.Add(this.fromLabel);
@@ -194,5 +207,6 @@
         private System.Windows.Forms.Label fromLabel;
         private System.Windows.Forms.Label toLabel;
         private System.Windows.Forms.CheckBox financialYear;
+        private System.Windows.Forms.CheckBox volumeModelFlag;
     }
 }

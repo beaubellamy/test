@@ -35,10 +35,8 @@ namespace wagonMovement
         /// Process the wagon movements into individual volume movements.
         /// </summary>
         /// <param name="filename">Filename of the wagon data.</param>
-        public static void processWagonMovements(string filename, string destinationFolder, DateTime fromDate, DateTime toDate)
+        public static void processWagonMovements(string filename, string destinationFolder, DateTime fromDate, DateTime toDate, bool volumeModel)
         {
-            bool VolumeModel = false; // Set to TRUE, when processing wagons for the Volume Model
-
             /* Create the Wagon list. */
             List<wagonDetails> wagon = new List<wagonDetails>();
 
@@ -49,9 +47,11 @@ namespace wagonMovement
                 /* Extract the data for the date range. */
                 wagon = wagon.Where(w => w.trainDate >= fromDate).Where(w => w.trainDate < toDate).ToList();
 
-                // Testing for inconsistencies with Volume model values
-                //wagon = wagon.Where(w => w.commodity.Equals(trainCommodity.Intermodal)).ToList();
-
+                if (wagon.Count() == 0)
+                {
+                    Tools.messageBox("No wagons found. \nCheck the file and dates.");
+                    return;
+                }
             }
             catch (IOException exception)
             {
@@ -68,23 +68,25 @@ namespace wagonMovement
             /* Combine the wagon movements based on planned destination and weights. */
             List<volumeMovement> volume = new List<volumeMovement>();
             
-            if (VolumeModel)
+            if (volumeModel)
                 volume = combineWagonMovementsAlternateMethod(wagon);
             else
                 volume = combineWagonMovements(wagon);
 
             readGeoLocationCodes();
             
-            //  Included for testing inconsistencies in volume model values.
-            //populateLocations(volume);
+            /********************** testing ******************************************/
+            ////  Included for testing inconsistencies in volume model values.
+            populateLocations(volume);
             
             ///* Write the first pass at the volume combinations. */
-            //if (!VolumeModel)
+            //if (!volumeModel)
             //    FileOperations.writeVolumeDataByCommodity(volume, destinationFolder);
-            //// Remember to save this file as <>"-first pass" before writing the next volume file.
+            //    // Remember to save this file as <>"-first pass" before writing the next volume file.
+            /********************** testing ******************************************/
             
             /* Combine the volume movements that appear to be continuations of the same wagon. */
-            if (!VolumeModel)
+            if (!volumeModel)
                 volume = combineVolumeMovements(volume);
 
             /* Write the wagon details to excel. */
@@ -347,7 +349,6 @@ namespace wagonMovement
             string Destination = "";
             List<string> destinationLocation = new List<string>();
 
-            List<string> Location = new List<string>();
             DateTime attachmentTime = new DateTime(2000, 1, 1);
             DateTime detachmentTime = new DateTime(2000, 1, 1);
 
@@ -360,9 +361,8 @@ namespace wagonMovement
                
                 current = volumeIdx;
                 next = current + 1;
-
-                 
-                // weight threshold is 50 kg
+                                 
+                // weight threshold is 50 kg - This is an arbitrary value
 
                 /* Locate the last volume movement that is equal */
                 while (Math.Abs(volume[current].netWeight - volume[next].netWeight) < 0.05 &&
@@ -449,7 +449,7 @@ namespace wagonMovement
         /// <summary>
         /// Combine the wagon movements so that the total volume for each leg of the journey 
         /// is provided. This will primarily be used to process the wagon data for the Volume Model.
-        /// Notel: This will indicate a significantly higher total volume for full journies.
+        /// Note: This will indicate a significantly higher total volume for full journies.
         /// </summary>
         /// <param name="wagon">A list of wagon movements.</param>
         /// <returns>A list of volume movements</returns>
@@ -480,7 +480,6 @@ namespace wagonMovement
                 }
                 else
                 {
-
                     /* The wagon was detatched at an intermediate location before continueing 
                      * on to the planned destination. 
                      */
@@ -514,7 +513,6 @@ namespace wagonMovement
                                 wagon[recordIdx].plannedDestination.Equals(wagon[searchIdx].plannedDestination) &&
                                 !wagon[searchIdx].plannedDestination.Equals(wagon[searchIdx].destination))
                         {
-
                             /* The wagon movement is continueing to the planned destination. */
                             if (searchIdx == wagon.Count() - 1)
                                 break;
@@ -559,22 +557,19 @@ namespace wagonMovement
                                     /* The weight is within a set threshold and is considered to have remained the same. */
                                     volume.Last().Destination[0] = wagon[searchIdx].destination;
                                     volume.Last().detachmentTime = wagon[searchIdx].detachmentTime;
-
-
+                                    
                                 }
                                 else if (wagon[recordIdx].netWeight < wagon[index].netWeight)
                                 {
                                     /* Weight has been added at the intermediate destination. */
                                     volume.Last().Destination[0] = wagon[searchIdx].destination;
                                     volume.Last().detachmentTime = wagon[searchIdx].detachmentTime;
-
-
+                                    
                                     item = new volumeMovement(wagon[recordIdx].TrainID, wagon[recordIdx].trainOperator, wagon[recordIdx].commodity, wagon[recordIdx].wagonID,
                                         wagon[index].origin, "", wagon[searchIdx].destination, wagon[index].netWeight - wagon[recordIdx].netWeight, wagon[index].grossWeight - wagon[recordIdx].grossWeight,
                                         wagon[index].attachmentTime, wagon[searchIdx].detachmentTime);
                                     volume.Add(item);
-
-
+                                    
                                 }
                                 else
                                 {
@@ -582,14 +577,12 @@ namespace wagonMovement
                                     volume.Last().Destination[0] = wagon[index].destination;
                                     volume.Last().detachmentTime = wagon[index].detachmentTime;
                                     volume.Last().netWeight = wagon[index].netWeight;
-
-
+                                    
                                     item = new volumeMovement(wagon[recordIdx].TrainID, wagon[recordIdx].trainOperator, wagon[recordIdx].commodity, wagon[recordIdx].wagonID,
                                         wagon[recordIdx].origin, "", wagon[recordIdx].destination, wagon[recordIdx].netWeight - wagon[index].netWeight, wagon[recordIdx].grossWeight - wagon[index].grossWeight,
                                         wagon[recordIdx].attachmentTime, wagon[recordIdx].detachmentTime);
                                     volume.Add(item);
-
-
+                                    
                                 }
                             }
                             else
@@ -600,8 +593,7 @@ namespace wagonMovement
                                     /* The weight is within a set threshold and is considered to have remained the same. */
                                     volume.Last().Destination[0] = wagon[index].destination;
                                     volume.Last().detachmentTime = wagon[index].detachmentTime;
-
-
+                                    
                                 }
                                 else if (wagon[recordIdx].netWeight < wagon[index].netWeight)
                                 {
@@ -609,16 +601,14 @@ namespace wagonMovement
                                     volume[volume.Count() - 1].Destination[0] = wagon[index].destination;
                                     volume[volume.Count() - 1].detachmentTime = wagon[index].detachmentTime;
                                     volume.Last().Destination[0] = wagon[index].destination;
-
-
+                                    
                                 }
                                 else
                                 {
                                     /* Weight has been removed at an intermediate locations. */
                                     volume[volume.Count() - 1].Destination[0] = wagon[index].destination;
                                     volume[volume.Count() - 1].detachmentTime = wagon[index].detachmentTime;
-
-
+                                    
                                 }
                             }
                         }
@@ -699,9 +689,11 @@ namespace wagonMovement
         }
 
         /// <summary>
-        /// Mapp the location codes to the location name, states and regions.
-        /// This function must be called after readGeoLocationCodes() to 
-        /// ensure the dictioanry elements have been populated.
+        /// Map the location codes to the location name, states and regions.This function must be called 
+        /// after readGeoLocationCodes() to ensure the dictioanry elements have been populated.
+        /// 
+        /// This function is only required when its neccessary to write teh volumee to file before 
+        /// combining movements.
         /// </summary>
         /// <param name="volume">A list of volume objects that require location mapping</param>
         /// <returns>The resuling list of volume objects with the location codes mapped to location names, states and regions.</returns>
@@ -745,7 +737,10 @@ namespace wagonMovement
             return volume;
         }
 
-        // Temporary function to display the wagon movement details.
+        /// <summary>
+        /// Helper function to display the initial wagon movements.
+        /// </summary>
+        /// <param name="wagon"></param>
         public static void displayWagonMovement(wagonDetails wagon)
         {
             Console.WriteLine("{0}  {1}  {2}  {3}  {4}  {5}  {6}  {7}  {8}  {9}", 
@@ -754,7 +749,10 @@ namespace wagonMovement
 
         }
 
-        // Temporary function to display the volume movement details.
+        /// <summary>
+        /// Helper function to display the volume movements.
+        /// </summary>
+        /// <param name="volume"></param>
         public static void displayVolumeMovement(volumeMovement volume)
         {
             Console.WriteLine("{0}  {1}  {2}  {3}  {4}  {5}  {6}  {7}  {8}  {9}",
