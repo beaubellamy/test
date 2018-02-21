@@ -141,26 +141,25 @@ namespace wagonMovement
                         
                         /* The volume has not reached the planned destination. */
 
-                        /* This seemed to be replaing the destination of some wagons that were not expected. */
+                        /* This seemed to be replacing the destination of some wagons that were not expected. */
                         // remove in the next commit, if its still not required.
 
-                        //if (wagon[searchIdx - 1].wagonID.Equals(wagon[searchIdx].wagonID) &&
-                        //   !wagon[recordIdx].plannedDestination.Equals(wagon[searchIdx].plannedDestination) &&
-                        //    wagon[recordIdx].attachmentTime < wagon[recordIdx - 1].attachmentTime)
-                        //{
-                        //    /* Correct the apparent mismatch in locations where the time stamps seems to 
-                        //     * indicate that the wagon has been attatched to two trains simultaneously. 
-                        //     */
-                            
-                        //    /* Replace the origin location. */
-                        //    volume.Last().Origin[0] = wagon[recordIdx].origin;
-                        //    volume.Last().attachmentTime = wagon[recordIdx].attachmentTime;
-                        //    searchIdx++;
-                        //    recordIdx++;
-
-                        //}
-                        //else 
                         if (wagon[searchIdx - 1].wagonID.Equals(wagon[searchIdx].wagonID) &&
+                           !wagon[recordIdx].plannedDestination.Equals(wagon[searchIdx].plannedDestination) &&
+                            wagon[recordIdx].attachmentTime < wagon[recordIdx - 1].attachmentTime)
+                        {
+                            /* Correct the apparent mismatch in locations where the time stamps seems to 
+                             * indicate that the wagon has been attatched to two trains simultaneously. 
+                             */
+
+                            /* Replace the origin location. */
+                            volume.Last().Origin[0] = wagon[recordIdx].origin;
+                            volume.Last().attachmentTime = wagon[recordIdx].attachmentTime;
+                            searchIdx++;
+                            recordIdx++;
+
+                        }
+                        else if (wagon[searchIdx - 1].wagonID.Equals(wagon[searchIdx].wagonID) &&
                                 wagon[recordIdx].plannedDestination.Equals(wagon[searchIdx].plannedDestination) &&
                                 !wagon[searchIdx].plannedDestination.Equals(wagon[searchIdx].destination) &&
                                 wagon[searchIdx].attachmentTime < wagon[searchIdx-1].detachmentTime.AddHours(attachThreshold))
@@ -206,8 +205,8 @@ namespace wagonMovement
                                 if (wagon[recordIdx].netWeight == wagon[index].netWeight)
                                 {
                                     /* The weight has not changed. */
-                                    volume.Last().Destination[0] = wagon[searchIdx].destination;
-                                    volume.Last().detachmentTime = wagon[searchIdx].detachmentTime;
+                                    volume.Last().Destination[0] = wagon[index].destination;
+                                    volume.Last().detachmentTime = wagon[index].detachmentTime;
 
                                     
                                 }
@@ -555,15 +554,15 @@ namespace wagonMovement
                                 if (Math.Abs(wagon[recordIdx].netWeight - wagon[index].netWeight) < weightThreshold)
                                 {
                                     /* The weight is within a set threshold and is considered to have remained the same. */
-                                    volume.Last().Destination[0] = wagon[searchIdx].destination;
-                                    volume.Last().detachmentTime = wagon[searchIdx].detachmentTime;
+                                    volume.Last().Destination[0] = wagon[index].destination;
+                                    volume.Last().detachmentTime = wagon[index].detachmentTime;
                                     
                                 }
                                 else if (wagon[recordIdx].netWeight < wagon[index].netWeight)
                                 {
                                     /* Weight has been added at the intermediate destination. */
-                                    volume.Last().Destination[0] = wagon[searchIdx].destination;
-                                    volume.Last().detachmentTime = wagon[searchIdx].detachmentTime;
+                                    volume.Last().Destination[0] = wagon[index].destination;
+                                    volume.Last().detachmentTime = wagon[index].detachmentTime;
                                     
                                     item = new volumeMovement(wagon[recordIdx].TrainID, wagon[recordIdx].trainOperator, wagon[recordIdx].commodity, wagon[recordIdx].wagonID,
                                         wagon[index].origin, "", wagon[searchIdx].destination, wagon[index].netWeight - wagon[recordIdx].netWeight, wagon[index].grossWeight - wagon[recordIdx].grossWeight,
