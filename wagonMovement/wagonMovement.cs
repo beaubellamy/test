@@ -360,7 +360,10 @@ namespace wagonMovement
                
                 current = volumeIdx;
                 next = current + 1;
-                                 
+
+                if (volume[current].wagonID.Equals("RCSF 27"))
+                    displayVolumeMovement(volume[current]);
+
                 // weight threshold is 50 kg - This is an arbitrary value
 
                 /* Locate the last volume movement that is equal */
@@ -529,9 +532,12 @@ namespace wagonMovement
 
                     /* The wagon has reached its planned destination. */
                     item = new volumeMovement(wagon[recordIdx].TrainID, wagon[recordIdx].trainOperator, wagon[recordIdx].commodity, wagon[recordIdx].wagonID,
-                        wagon[recordIdx].origin, "", wagon[recordIdx].destination, wagon[recordIdx].netWeight, wagon[recordIdx].grossWeight,
+                        wagon[recordIdx].origin, wagon[recordIdx].plannedDestination, wagon[recordIdx].destination, wagon[recordIdx].netWeight, wagon[recordIdx].grossWeight,
                         wagon[recordIdx].attachmentTime, wagon[recordIdx].detachmentTime);
                     volume.Add(item);
+
+                    if (wagon[recordIdx].wagonID.Equals("RCSF 27"))
+                        displayWagonMovement(wagon[recordIdx]);
 
 
                     if (!wagon[recordIdx].plannedDestination.Equals(wagon[searchIdx].plannedDestination))
@@ -565,7 +571,7 @@ namespace wagonMovement
                                     volume.Last().detachmentTime = wagon[index].detachmentTime;
                                     
                                     item = new volumeMovement(wagon[recordIdx].TrainID, wagon[recordIdx].trainOperator, wagon[recordIdx].commodity, wagon[recordIdx].wagonID,
-                                        wagon[index].origin, "", wagon[searchIdx].destination, wagon[index].netWeight - wagon[recordIdx].netWeight, wagon[index].grossWeight - wagon[recordIdx].grossWeight,
+                                        wagon[index].origin, wagon[index].plannedDestination, wagon[searchIdx].destination, wagon[index].netWeight - wagon[recordIdx].netWeight, wagon[index].grossWeight - wagon[recordIdx].grossWeight,
                                         wagon[index].attachmentTime, wagon[searchIdx].detachmentTime);
                                     volume.Add(item);
                                     
@@ -578,7 +584,7 @@ namespace wagonMovement
                                     volume.Last().netWeight = wagon[index].netWeight;
                                     
                                     item = new volumeMovement(wagon[recordIdx].TrainID, wagon[recordIdx].trainOperator, wagon[recordIdx].commodity, wagon[recordIdx].wagonID,
-                                        wagon[recordIdx].origin, "", wagon[recordIdx].destination, wagon[recordIdx].netWeight - wagon[index].netWeight, wagon[recordIdx].grossWeight - wagon[index].grossWeight,
+                                        wagon[recordIdx].origin, wagon[index].plannedDestination, wagon[recordIdx].destination, wagon[recordIdx].netWeight - wagon[index].netWeight, wagon[recordIdx].grossWeight - wagon[index].grossWeight,
                                         wagon[recordIdx].attachmentTime, wagon[recordIdx].detachmentTime);
                                     volume.Add(item);
                                     
@@ -591,6 +597,7 @@ namespace wagonMovement
                                 {
                                     /* The weight is within a set threshold and is considered to have remained the same. */
                                     volume.Last().Destination[0] = wagon[index].destination;
+                                    volume.Last().OriginDestination = volume.Last().Origin[0] + "-" + volume.Last().Destination[0];
                                     volume.Last().detachmentTime = wagon[index].detachmentTime;
                                     
                                 }
@@ -598,14 +605,17 @@ namespace wagonMovement
                                 {
                                     /* Weight has been added at an intermediate locations. */
                                     volume[volume.Count() - 1].Destination[0] = wagon[index].destination;
+                                    volume[volume.Count() - 1].OriginDestination = volume[volume.Count() - 1].Origin[0] + "-" + volume.Last().Destination[0];
                                     volume[volume.Count() - 1].detachmentTime = wagon[index].detachmentTime;
                                     volume.Last().Destination[0] = wagon[index].destination;
+                                    volume.Last().OriginDestination = volume.Last().Origin[0] + "-" + volume.Last().Destination[0];
                                     
                                 }
                                 else
                                 {
                                     /* Weight has been removed at an intermediate locations. */
                                     volume[volume.Count() - 1].Destination[0] = wagon[index].destination;
+                                    volume[volume.Count() - 1].OriginDestination = volume[volume.Count() - 1].Origin[0] + "-" + volume.Last().Destination[0];
                                     volume[volume.Count() - 1].detachmentTime = wagon[index].detachmentTime;
                                     
                                 }
@@ -642,6 +652,55 @@ namespace wagonMovement
 
             }
 
+            return volume;
+        }
+
+
+        private static List<volumeMovement> combineVolumeMovementsAlternateMethod(List<volumeMovement> volume)
+        {
+            //double weightThreshold = 0.5;
+            //List<volumeMovement> newVolume = new List<volumeMovement>();
+            bool locationChange = false;
+
+            string Origin = "";
+            //string Destination = "";
+
+            for (int index = 0; index < volume.Count(); index++)
+            {
+                /* Create a new volume movement */
+                //volumeMovement item = new volumeMovement(volume[index]);
+
+                if (volume[index].netWeight > 0)
+                {
+                    // figure out real origin and destiantion
+                    // repopulate all as real O-D
+                    int searchIdx = index+1;
+
+                    while(volume[searchIdx].wagonID.Equals(volume[index].wagonID) &&
+                        volume[searchIdx].Via[0].Equals(volume[index].Via[0]))
+                    {
+                        locationChange = true;
+                        Origin = volume[index].Origin[0];
+
+                        searchIdx++;
+                    }
+
+                    if (locationChange)
+                    {
+                        for (int i = index; i < searchIdx; i++)
+                        {
+                            volume[i].Origin[0] = Origin;
+                            volume[i].Destination[0] = volume[searchIdx - 1].Destination[0];
+                        }
+                    }
+
+                }
+
+
+            }
+
+            // re-map location codes
+            populateLocations(volume);
             return volume;
         }
 
