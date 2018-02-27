@@ -17,7 +17,16 @@ namespace wagonMovement
 
     class Algorithm
     {
-        
+        /* Weight threshold for differences for the standard analysis to be considered the same. units in tonnes. */
+        public const double weightThreshold = 0.05;
+        /* Weight threshold for differences for the volume model analysis to be considered the same. units in tonnes. */
+        public const double volumeModelWeightThreshold = 0.5;
+        /* Default threshold for the time between dettachment and attachement in 
+         * hours to be considered a continuation of the same movement. 
+         * - Primarily used for the volume model analysis.
+         */
+        public const double attatchThreshold = 2;
+
         /// <summary>
         /// Entry point to create and show the form. 
         /// </summary>
@@ -63,7 +72,7 @@ namespace wagonMovement
             }
 
             /* Sort the wagon data to ensure all similar wagon IDs are consecutive. */
-            wagon = wagon.OrderBy(w => w.wagonID).ThenBy(w => w.attachmentTime).ThenBy(w => w.netWeight).ToList();
+            wagon = wagon.OrderBy(w => w.wagonID).ThenBy(w => w.commodity).ThenBy(w => w.attachmentTime).ThenBy(w => w.netWeight).ToList();
 
             /* Combine the wagon movements based on planned destination and weights. */
             List<volumeMovement> volume = new List<volumeMovement>();
@@ -86,9 +95,12 @@ namespace wagonMovement
             /********************** testing ******************************************/
             
             /* Combine the volume movements that appear to be continuations of the same wagon. */
-            if (!volumeModel)
+            if (volumeModel)
+                volume = combineVolumeMovementsAlternateMethod(volume);
+            else
                 volume = combineVolumeMovements(volume);
 
+            
             /* Write the wagon details to excel. */
             FileOperations.writeWagonData(wagon, destinationFolder);
             //FileOperations.writeVolumeData(volume, destinationFolder);
@@ -150,6 +162,10 @@ namespace wagonMovement
                         {
                             /* Correct the apparent mismatch in locations where the time stamps seems to 
                              * indicate that the wagon has been attatched to two trains simultaneously. 
+                             * 
+                             * NOTE: removed this code when it appeared to replace some destinations 
+                             * that were not expected. However, the code is required to correct for the 
+                             * attatchemnt time.
                              */
 
                             /* Replace the origin location. */
@@ -207,7 +223,6 @@ namespace wagonMovement
                                     /* The weight has not changed. */
                                     volume.Last().Destination[0] = wagon[index].destination;
                                     volume.Last().detachmentTime = wagon[index].detachmentTime;
-
                                     
                                 }
                                 else if (wagon[recordIdx].netWeight < wagon[index].netWeight)
@@ -215,14 +230,12 @@ namespace wagonMovement
                                     /* Weight has been added at the intermediate destination. */
                                     volume.Last().Destination[0] = wagon[searchIdx].destination;
                                     volume.Last().detachmentTime = wagon[searchIdx].detachmentTime;
-
-                                    
+                                                                        
                                     item = new volumeMovement(wagon[recordIdx].TrainID, wagon[recordIdx].trainOperator, wagon[recordIdx].commodity, wagon[recordIdx].wagonID,
                                         wagon[index].origin, "", wagon[searchIdx].destination, wagon[index].netWeight - wagon[recordIdx].netWeight, wagon[index].grossWeight - wagon[recordIdx].grossWeight, 
                                         wagon[index].attachmentTime, wagon[searchIdx].detachmentTime);
                                     volume.Add(item);
-
-                                    
+                                                                        
                                 }
                                 else
                                 {
@@ -230,14 +243,12 @@ namespace wagonMovement
                                     volume.Last().Destination[0] = wagon[index].destination;
                                     volume.Last().detachmentTime = wagon[index].detachmentTime;
                                     volume.Last().netWeight = wagon[index].netWeight;
-
-                                    
+                                                                        
                                     item = new volumeMovement(wagon[recordIdx].TrainID, wagon[recordIdx].trainOperator, wagon[recordIdx].commodity, wagon[recordIdx].wagonID,
                                         wagon[recordIdx].origin, "", wagon[recordIdx].destination, wagon[recordIdx].netWeight - wagon[index].netWeight, wagon[recordIdx].grossWeight - wagon[index].grossWeight,
                                         wagon[recordIdx].attachmentTime, wagon[recordIdx].detachmentTime);
                                     volume.Add(item);
-
-                                    
+                                                                        
                                 }
                             }
                             else
@@ -248,8 +259,7 @@ namespace wagonMovement
                                     /* The weights remained the same. */
                                     volume.Last().Destination[0] = wagon[index].destination;
                                     volume.Last().detachmentTime = wagon[index].detachmentTime;
-
-                                    
+                                                                        
                                 }
                                 else if (wagon[recordIdx].netWeight < wagon[index].netWeight)
                                 {
@@ -257,16 +267,14 @@ namespace wagonMovement
                                     volume[volume.Count() - 1].Destination[0] = wagon[index].destination;
                                     volume[volume.Count() - 1].detachmentTime = wagon[index].detachmentTime;
                                     volume.Last().Destination[0] = wagon[index].destination;
-
-                                    
+                                                                        
                                 }
                                 else
                                 {
                                     /* Weight has been removed at an intermediate locations. */
                                     volume[volume.Count() - 1].Destination[0] = wagon[index].destination;
                                     volume[volume.Count() - 1].detachmentTime = wagon[index].detachmentTime;
-
-                                    
+                                                                        
                                 }
                             }
                         }
@@ -324,7 +332,7 @@ namespace wagonMovement
         /// </summary>
         /// <param name="volume">Initial list of volume movements</param>
         /// <returns>List of volume movements</returns>
-        public static List<volumeMovement> combineVolumeMovements(List<volumeMovement> volume)
+        private static List<volumeMovement> combineVolumeMovements(List<volumeMovement> volume)
         {
             /* Create a new list of volumes that will be returned. */
             List<volumeMovement> newVolume = new List<volumeMovement>();
@@ -361,13 +369,8 @@ namespace wagonMovement
                 current = volumeIdx;
                 next = current + 1;
 
-                if (volume[current].wagonID.Equals("RCSF 27"))
-                    displayVolumeMovement(volume[current]);
-
-                // weight threshold is 50 kg - This is an arbitrary value
-
                 /* Locate the last volume movement that is equal */
-                while (Math.Abs(volume[current].netWeight - volume[next].netWeight) < 0.05 &&
+                while (Math.Abs(volume[current].netWeight - volume[next].netWeight) < weightThreshold &&
                        volume[current].netWeight > 0)
                 {
                     next++;
@@ -378,10 +381,14 @@ namespace wagonMovement
                 }
                 next--;
 
-                /* This corrects for combining two wagon movements that are just return journeys with the same weight. */
+                /* This corrects for combining two wagon movements that are just return journeys
+                 * with the same weight. 
+                 */
                 if (volume[current].Origin[0].Equals(volume[next].Destination[0]))
                 {
-                    /* If the last wagon movement in the journey is at least 2 or more movements later, then they should still be combined */
+                    /* If the last wagon movement in the journey is at least 2 or more movements 
+                     * later, then they should still be combined 
+                     */
                     if (next - current > 1)
                         next++;
 
@@ -411,6 +418,7 @@ namespace wagonMovement
                 attachmentTime = volume[current].attachmentTime;
                 detachmentTime = volume[current].detachmentTime;
 
+                /********** remove this section of code and call locations function at end. ************/
                 /* Convert the location codes to location names, regions, state and areas. */
                 if (FileOperations.locationDictionary.TryGetValue(Origin, out dictionary))
                     originLocation = new List<string> { dictionary[0], dictionary[1], dictionary[2], dictionary[3] };
@@ -460,14 +468,7 @@ namespace wagonMovement
             /* Initialise the volume list */
             List<volumeMovement> volume = new List<volumeMovement>();
             int searchIdx = 0;
-
-            /* Defaut threshold for differences in weight to be considered the same. Units in tonnes. */
-            double weightThreshold = 0.5;
-            /* Default threshold for the time between dettachment and attachement in 
-             * hours to be considered a continuation of the same movement. 
-             */
-            double attatchThreshold = 2;
-
+                        
             /* Search through all wagon movements */
             for (int recordIdx = 0; recordIdx < wagon.Count(); recordIdx++)
             {
@@ -536,10 +537,6 @@ namespace wagonMovement
                         wagon[recordIdx].attachmentTime, wagon[recordIdx].detachmentTime);
                     volume.Add(item);
 
-                    if (wagon[recordIdx].wagonID.Equals("RCSF 27"))
-                        displayWagonMovement(wagon[recordIdx]);
-
-
                     if (!wagon[recordIdx].plannedDestination.Equals(wagon[searchIdx].plannedDestination))
                     {
                         /* The wagon has been detatched before it reached the planned destination. */
@@ -557,7 +554,7 @@ namespace wagonMovement
 
                             if (index <= recordIdx + 1)
                             {
-                                if (Math.Abs(wagon[recordIdx].netWeight - wagon[index].netWeight) < weightThreshold)
+                                if (Math.Abs(wagon[recordIdx].netWeight - wagon[index].netWeight) < volumeModelWeightThreshold)
                                 {
                                     /* The weight is within a set threshold and is considered to have remained the same. */
                                     volume.Last().Destination[0] = wagon[index].destination;
@@ -593,7 +590,7 @@ namespace wagonMovement
                             else
                             {
                                 /* Multiple intermediate locations have been found. */
-                                if (Math.Abs(wagon[recordIdx].netWeight - wagon[index].netWeight) < weightThreshold)
+                                if (Math.Abs(wagon[recordIdx].netWeight - wagon[index].netWeight) < volumeModelWeightThreshold)
                                 {
                                     /* The weight is within a set threshold and is considered to have remained the same. */
                                     volume.Last().Destination[0] = wagon[index].destination;
@@ -655,32 +652,38 @@ namespace wagonMovement
             return volume;
         }
 
-
+        /// <summary>
+        /// Relabel the Origin-Destination label as the origin - destination of the total 
+        /// volume while retaining each movement involved.
+        /// </summary>
+        /// <param name="volume">A list of volume movements</param>
+        /// <returns>A list of volume movements</returns>
         private static List<volumeMovement> combineVolumeMovementsAlternateMethod(List<volumeMovement> volume)
         {
-            //double weightThreshold = 0.5;
-            //List<volumeMovement> newVolume = new List<volumeMovement>();
-            bool locationChange = false;
-
+            
             string Origin = "";
-            //string Destination = "";
-
+            
             for (int index = 0; index < volume.Count(); index++)
             {
-                /* Create a new volume movement */
-                //volumeMovement item = new volumeMovement(volume[index]);
-
+                bool locationChange = false;
+                bool operatorChange = false;
+                                
                 if (volume[index].netWeight > 0)
                 {
-                    // figure out real origin and destiantion
-                    // repopulate all as real O-D
                     int searchIdx = index+1;
 
+                    /* Determine the final destination of the volume and track the first origin location. */
                     while(volume[searchIdx].wagonID.Equals(volume[index].wagonID) &&
-                        volume[searchIdx].Via[0].Equals(volume[index].Via[0]))
+                        volume[index].netWeight > 0 &&
+                        volume[searchIdx].netWeight == volume[index].netWeight &&
+                        volume[searchIdx-1].Destination[0].Equals(volume[searchIdx].Origin[0]))
                     {
                         locationChange = true;
                         Origin = volume[index].Origin[0];
+
+                        /* Interail will sometimes transport SCT wagons. Convert these operators to SCT. */
+                        if (volume[searchIdx].trainOperator.Equals(trainOperator.SCT))
+                            operatorChange = true;
 
                         searchIdx++;
                     }
@@ -689,21 +692,28 @@ namespace wagonMovement
                     {
                         for (int i = index; i < searchIdx; i++)
                         {
-                            volume[i].Origin[0] = Origin;
-                            volume[i].Destination[0] = volume[searchIdx - 1].Destination[0];
+                            /* re-mapp the actual origin destination of the volume for each movement that is involved. */
+                            volume[i].OriginDestination = Origin + "-" + volume[searchIdx - 1].Destination[0];
+                            /* This maintains the physicsal origin destination of each movement while still labeling 
+                             * each movement with the full journey origin destination pair. 
+                             */
+
+                            /* Convert Interail operator to SCT if required. */
+                            if (volume[i].trainOperator.Equals(trainOperator.Interail) && operatorChange)
+                                volume[i].trainOperator = trainOperator.SCT;
                         }
+                        index = searchIdx - 1;
                     }
 
                 }
-
-
+                
             }
-
+                   
             // re-map location codes
             populateLocations(volume);
             return volume;
         }
-
+                
         /// <summary>
         /// Read the excel file that has mapped the ARTC location codes 
         /// to location names and ABS statistical regions. These values 
