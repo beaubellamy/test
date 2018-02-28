@@ -82,25 +82,18 @@ namespace wagonMovement
             else
                 volume = combineWagonMovements(wagon);
 
+            /* Get the location properties for each Geo code. */
             readGeoLocationCodes();
-            
-            /********************** testing ******************************************/
-            ////  Included for testing inconsistencies in volume model values.
-            populateLocations(volume);
-            
-            ///* Write the first pass at the volume combinations. */
-            //if (!volumeModel)
-            //    FileOperations.writeVolumeDataByCommodity(volume, destinationFolder);
-            //    // Remember to save this file as <>"-first pass" before writing the next volume file.
-            /********************** testing ******************************************/
-            
+              
             /* Combine the volume movements that appear to be continuations of the same wagon. */
             if (volumeModel)
                 volume = combineVolumeMovementsAlternateMethod(volume);
             else
                 volume = combineVolumeMovements(volume);
 
-            
+            /* populate all the lcoation detaisle for each origin destination code. */
+            populateLocations(volume);
+
             /* Write the wagon details to excel. */
             FileOperations.writeWagonData(wagon, destinationFolder);
             //FileOperations.writeVolumeData(volume, destinationFolder);
@@ -138,7 +131,6 @@ namespace wagonMovement
                 }
                 else
                 {
-
                     /* The wagon was detatched at an intermediate location before continueing 
                      * on to the planned destination. 
                      */
@@ -146,16 +138,10 @@ namespace wagonMovement
                     /* Find the recordId, where the wagon reaches its planned destination. */
                     if ((recordIdx + 1) < wagon.Count())
                         searchIdx = recordIdx + 1;
-
                     
                     while (!wagon[searchIdx].plannedDestination.Equals(wagon[searchIdx].destination))
-                    {
-                        
+                    {                        
                         /* The volume has not reached the planned destination. */
-
-                        /* This seemed to be replacing the destination of some wagons that were not expected. */
-                        // remove in the next commit, if its still not required.
-
                         if (wagon[searchIdx - 1].wagonID.Equals(wagon[searchIdx].wagonID) &&
                            !wagon[recordIdx].plannedDestination.Equals(wagon[searchIdx].plannedDestination) &&
                             wagon[recordIdx].attachmentTime < wagon[recordIdx - 1].attachmentTime)
@@ -179,8 +165,7 @@ namespace wagonMovement
                                 wagon[recordIdx].plannedDestination.Equals(wagon[searchIdx].plannedDestination) &&
                                 !wagon[searchIdx].plannedDestination.Equals(wagon[searchIdx].destination) &&
                                 wagon[searchIdx].attachmentTime < wagon[searchIdx-1].detachmentTime.AddHours(attachThreshold))
-                        {
-                            
+                        {                            
                             /* The wagon movement is continueing to the planned destination. */
                             if (searchIdx == wagon.Count() - 1)
                                 break;
@@ -188,8 +173,7 @@ namespace wagonMovement
                             searchIdx++;
                         }
                         else
-                        {
-                            
+                        {                            
                             searchIdx--;
                             break;
                         }
@@ -343,7 +327,6 @@ namespace wagonMovement
             int next = current + 1;
 
             /* Initialise the wagon strings. */
-            List<string> dictionary = null;
             string trainID = "";
             string wagonID = "";
             trainOperator trainOperator = trainOperator.Unknown;
@@ -418,30 +401,11 @@ namespace wagonMovement
                 attachmentTime = volume[current].attachmentTime;
                 detachmentTime = volume[current].detachmentTime;
 
-                /********** remove this section of code and call locations function at end. ************/
-                /* Convert the location codes to location names, regions, state and areas. */
-                if (FileOperations.locationDictionary.TryGetValue(Origin, out dictionary))
-                    originLocation = new List<string> { dictionary[0], dictionary[1], dictionary[2], dictionary[3] };
-                else
-                    originLocation = new List<string> { Origin, "Unknown Region", "Unknown State", "Unknown Area" };
-
-                if (Via != "")
-                {
-                    if (FileOperations.locationDictionary.TryGetValue(Via, out dictionary))
-                        viaLocation = new List<string> { dictionary[0], dictionary[1], dictionary[2], dictionary[3] };
-                    else
-                        viaLocation = new List<string> { Via, "Unknown Region", "Unknown State", "Unknown Area" };
-                }
-                else
-                {
-                    viaLocation = new List<string> { "", "", "", "" };
-                }
-
-                if (FileOperations.locationDictionary.TryGetValue(Destination, out dictionary))
-                    destinationLocation = new List<string> { dictionary[0], dictionary[1], dictionary[2], dictionary[3] };
-                else
-                    destinationLocation = new List<string> { Destination, "Unknown Region", "Unknown State", "Unknown Area" };
-
+                /* Populate initial location codes. */
+                originLocation = new List<string> { Origin, "Unknown Region", "Unknown State", "Unknown Area" };
+                viaLocation = new List<string> { Via, "Unknown Region", "Unknown State", "Unknown Area" };
+                destinationLocation = new List<string> { Destination, "Unknown Region", "Unknown State", "Unknown Area" };
+                                
                 /* Create the volume itme and add to the list. */
                 volumeMovement item = new volumeMovement(trainID, trainOperator, commodity, wagonID, originLocation, viaLocation, destinationLocation, 
                     netWeight, grossWeight, attachmentTime, detachmentTime);
@@ -471,8 +435,7 @@ namespace wagonMovement
                         
             /* Search through all wagon movements */
             for (int recordIdx = 0; recordIdx < wagon.Count(); recordIdx++)
-            {
-                
+            {                
                 /* Create a new volume movement */
                 volumeMovement item = new volumeMovement(wagon[recordIdx]);
 
@@ -660,11 +623,12 @@ namespace wagonMovement
         /// <returns>A list of volume movements</returns>
         private static List<volumeMovement> combineVolumeMovementsAlternateMethod(List<volumeMovement> volume)
         {
-            
+            /* Track the origin of the volume. */
             string Origin = "";
             
             for (int index = 0; index < volume.Count(); index++)
             {
+                /* Flags indicating location or opertar need to be updated. */
                 bool locationChange = false;
                 bool operatorChange = false;
                                 
@@ -709,8 +673,6 @@ namespace wagonMovement
                 
             }
                    
-            // re-map location codes
-            populateLocations(volume);
             return volume;
         }
                 
@@ -757,28 +719,23 @@ namespace wagonMovement
         }
 
         /// <summary>
-        /// Map the location codes to the location name, states and regions.This function must be called 
-        /// after readGeoLocationCodes() to ensure the dictioanry elements have been populated.
+        /// Map the location codes to the location name, states and regions. This function must be called 
+        /// after readGeoLocationCodes() to ensure the dictionary elements have been populated.
         /// 
-        /// This function is only required when its neccessary to write teh volumee to file before 
+        /// This function is only required when its neccessary to write the volume to file before 
         /// combining movements.
         /// </summary>
         /// <param name="volume">A list of volume objects that require location mapping</param>
         /// <returns>The resuling list of volume objects with the location codes mapped to location names, states and regions.</returns>
         public static List<volumeMovement> populateLocations(List<volumeMovement> volume)
         {
-            /* The original location code is retained in the first list location to allow the 
-             * mapping to be performed again in the final continuation function, where the 
-             * locations can change. 
-             */
-
             List<string> dictionary = new List<string>();
 
             foreach (volumeMovement item in volume)
             {
                 /* Map the Origin location code. */
                 if (FileOperations.locationDictionary.TryGetValue(item.Origin[0], out dictionary))
-                    item.Origin = new List<string> { item.Origin[0], dictionary[1], dictionary[2], dictionary[3] };
+                    item.Origin = new List<string> { dictionary[0], dictionary[1], dictionary[2], dictionary[3] };
                 else
                     item.Origin = new List<string> { item.Origin[0], "Unknown Region", "Unknown State", "Unknown Area" };
 
@@ -786,7 +743,7 @@ namespace wagonMovement
                 if (item.Via[0] != "")
                 {
                     if (FileOperations.locationDictionary.TryGetValue(item.Via[0], out dictionary))
-                        item.Via = new List<string> { item.Via[0], dictionary[1], dictionary[2], dictionary[3] };
+                        item.Via = new List<string> { dictionary[0], dictionary[1], dictionary[2], dictionary[3] };
                     else
                         item.Via = new List<string> { item.Via[0], "Unknown Region", "Unknown State", "Unknown Area" };
                 }
@@ -797,7 +754,7 @@ namespace wagonMovement
 
                 /* Map the Destination location code. */
                 if (FileOperations.locationDictionary.TryGetValue(item.Destination[0], out dictionary))
-                    item.Destination = new List<string> { item.Destination[0], dictionary[1], dictionary[2], dictionary[3] };
+                    item.Destination = new List<string> { dictionary[0], dictionary[1], dictionary[2], dictionary[3] };
                 else
                     item.Destination = new List<string> { item.Destination[0], "Unknown Region", "Unknown State", "Unknown Area" };
             }
