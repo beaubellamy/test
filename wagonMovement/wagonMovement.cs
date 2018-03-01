@@ -757,6 +757,24 @@ namespace wagonMovement
                     item.Destination = new List<string> { dictionary[0], dictionary[1], dictionary[2], dictionary[3] };
                 else
                     item.Destination = new List<string> { item.Destination[0], "Unknown Region", "Unknown State", "Unknown Area" };
+
+                /* Map the Origin-Destination description */
+                string origin = item.OriginDestination.Substring(0, 3);
+                string destination = item.OriginDestination.Substring(4, 3);
+
+                if (FileOperations.locationDictionary.TryGetValue(origin, out dictionary))
+                    origin = dictionary[0];
+                else
+                    origin = item.Destination[0];
+
+                if (FileOperations.locationDictionary.TryGetValue(destination, out dictionary))
+                    destination = dictionary[0];
+                else
+                    destination = item.Destination[0];
+
+                /* Replace the loation code with the location names. */
+                item.OriginDestination = origin + "-" + destination;
+
             }
 
             return volume;
