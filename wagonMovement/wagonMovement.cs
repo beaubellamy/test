@@ -763,17 +763,17 @@ namespace wagonMovement
                 string destination = item.OriginDestination.Substring(4, 3);
 
                 if (FileOperations.locationDictionary.TryGetValue(origin, out dictionary))
-                    origin = dictionary[0];
+                    origin = dictionary[3];
                 else
                     origin = item.Destination[0];
 
                 if (FileOperations.locationDictionary.TryGetValue(destination, out dictionary))
-                    destination = dictionary[0];
+                    destination = dictionary[3];
                 else
                     destination = item.Destination[0];
 
-                /* Replace the loation code with the location names. */
-                item.OriginDestination = origin + "-" + destination;
+                /* Replace the loation code with the location area. */
+                item.OriginDestination = origin + " - " + destination;
 
             }
 
