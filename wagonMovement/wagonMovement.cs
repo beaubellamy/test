@@ -40,7 +40,7 @@ namespace wagonMovement
         /// Process the wagon movements into individual volume movements.
         /// </summary>
         /// <param name="filename">Filename of the wagon data.</param>
-        public static void processWagonMovements(string filename, string destinationFolder, DateTime fromDate, DateTime toDate, bool volumeModel)
+        public static void processWagonMovements(string filename, string destinationFolder, DateTime fromDate, DateTime toDate, bool volumeModel, bool combineIntermodalAndSteel)
         {
             /* Create the Wagon list. */
             List<wagonDetails> wagon = new List<wagonDetails>();
@@ -48,7 +48,7 @@ namespace wagonMovement
             /* Populate the wagon list with the data from the data file. */
             try
             {
-                wagon = FileOperations.readWagonDataFile(filename);
+                wagon = FileOperations.readWagonDataFile(filename, combineIntermodalAndSteel);
                 /* Extract the data for the date range. */
                 wagon = wagon.Where(w => w.trainDate >= fromDate).Where(w => w.trainDate < toDate).ToList();
 

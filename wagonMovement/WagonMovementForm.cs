@@ -30,6 +30,9 @@ namespace wagonMovement
         /* Volume Model flag. Set to true when volumes are required for teh volume model. */
         public bool volumeModel = false;
 
+        /* The flag to identify whether to add the intermodal and steel commodities into the interstate commodity. */
+        public bool combineIntermodalAndSteel = false;
+
         /* Timer parameters to keep track of execution time. */
         private int timeCounter = 0;
         private bool stopTheClock = false;
@@ -101,7 +104,7 @@ namespace wagonMovement
                 
                 /* Validate the data file and process the data. */
                 if (File.Exists(dataFile))
-                    Algorithm.processWagonMovements(dataFile, destination, fromDate, toDate, volumeModel);
+                    Algorithm.processWagonMovements(dataFile, destination, fromDate, toDate, volumeModel, combineIntermodalAndSteel);
 
             };
 
@@ -221,9 +224,12 @@ namespace wagonMovement
                 volumeModel = false;
         }
 
-       
-        
-
-        
+        private void addIntermodalAndSteelToInterstate_CheckedChanged(object sender, EventArgs e)
+        {
+            if (addIntermodalAndSteelToInterstate.Checked)
+                combineIntermodalAndSteel = true;
+            else
+                combineIntermodalAndSteel = false;
+        }
     }
 }
