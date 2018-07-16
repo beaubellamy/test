@@ -48,10 +48,12 @@ namespace wagonMovement
             /* Populate the wagon list with the data from the data file. */
             try
             {
-                wagon = FileOperations.readWagonDataFile(filename, combineIntermodalAndSteel);
+                //wagon = FileOperations.readWagonDataFile(filename, combineIntermodalAndSteel);
+                wagon = FileOperations.readAzureWagonDataFile(filename, combineIntermodalAndSteel);
+
                 /* Extract the data for the date range. */
                 wagon = wagon.Where(w => w.trainDate >= fromDate).Where(w => w.trainDate < toDate).ToList();
-
+                
                 if (wagon.Count() == 0)
                 {
                     Tools.messageBox("No wagons found. \nCheck the file and dates.");
@@ -66,10 +68,10 @@ namespace wagonMovement
                     return;
                 }
             }
-
+            
             /* Sort the wagon data to ensure all similar wagon IDs are consecutive. */
             wagon = wagon.OrderBy(w => w.wagonID).ThenBy(w => w.commodity).ThenBy(w => w.attachmentTime).ThenBy(w => w.netWeight).ToList();
-
+            
             /* Combine the wagon movements based on planned destination and weights. */
             List<volumeMovement> volume = new List<volumeMovement>();
             
@@ -85,6 +87,7 @@ namespace wagonMovement
             if (volumeModel)
                 volume = combineVolumeMovementsAlternateMethod(volume);
             else
+                /* Standard method */
                 volume = combineVolumeMovements(volume);
 
             /* populate all the lcoation detaisle for each origin destination code. */
@@ -114,8 +117,10 @@ namespace wagonMovement
             List<volumeMovement> volume = new List<volumeMovement>();
             int searchIdx = 0;
 
+            volume.Add(new volumeMovement(wagon[0]));
+
             /* search through all wagon movements */
-            for (int recordIdx = 0; recordIdx < wagon.Count(); recordIdx++)
+            for (int recordIdx = 1; recordIdx < wagon.Count(); recordIdx++)
             {
                 /* Create a new volume movement */
                 volumeMovement item = new volumeMovement(wagon[recordIdx]);
