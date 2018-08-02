@@ -55,8 +55,9 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="IOLibrary">
-      <HintPath>..\..\..\..\..\..\Infrastructure Strategies\Simulations\Software Libraries\IOLibrary\IOLibrary\bin\x64\Release\IOLibrary.dll</HintPath>
+    <Reference Include="IOLibrary, Version=1.0.0.0, Culture=neutral, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\Infrastructure Strategies\Simulations\Software Libraries\IOLibrary\IOLibrary\bin\x64\Debug\IOLibrary.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -67,8 +68,9 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="TrainLibrary">
-      <HintPath>..\..\..\..\..\..\Infrastructure Strategies\Simulations\Software Libraries\TrainLibrary\TrainLibrary\bin\x64\Release\TrainLibrary.dll</HintPath>
+    <Reference Include="TrainLibrary, Version=1.0.0.0, Culture=neutral, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\Infrastructure Strategies\Simulations\Software Libraries\TrainLibrary\TrainLibrary\bin\x64\Debug\TrainLibrary.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
