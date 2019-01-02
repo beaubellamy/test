@@ -43,20 +43,21 @@
             this.financialYear = new System.Windows.Forms.CheckBox();
             this.volumeModelFlag = new System.Windows.Forms.CheckBox();
             this.addIntermodalAndSteelToInterstate = new System.Windows.Forms.CheckBox();
+            this.UseSQLCommand = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // wagonFile
             // 
             this.wagonFile.ForeColor = System.Drawing.SystemColors.InactiveCaptionText;
-            this.wagonFile.Location = new System.Drawing.Point(173, 48);
+            this.wagonFile.Location = new System.Drawing.Point(173, 87);
             this.wagonFile.Name = "wagonFile";
-            this.wagonFile.Size = new System.Drawing.Size(631, 20);
+            this.wagonFile.Size = new System.Drawing.Size(539, 20);
             this.wagonFile.TabIndex = 1;
             this.wagonFile.Text = "<Select a file>";
             // 
             // SelectFileButton
             // 
-            this.SelectFileButton.Location = new System.Drawing.Point(12, 41);
+            this.SelectFileButton.Location = new System.Drawing.Point(12, 80);
             this.SelectFileButton.Name = "SelectFileButton";
             this.SelectFileButton.Size = new System.Drawing.Size(155, 33);
             this.SelectFileButton.TabIndex = 2;
@@ -66,9 +67,9 @@
             // 
             // ProcessButton
             // 
-            this.ProcessButton.Location = new System.Drawing.Point(588, 150);
+            this.ProcessButton.Location = new System.Drawing.Point(568, 160);
             this.ProcessButton.Name = "ProcessButton";
-            this.ProcessButton.Size = new System.Drawing.Size(216, 46);
+            this.ProcessButton.Size = new System.Drawing.Size(236, 46);
             this.ProcessButton.TabIndex = 3;
             this.ProcessButton.Text = "Process";
             this.ProcessButton.UseVisualStyleBackColor = true;
@@ -77,7 +78,7 @@
             // executionTime
             // 
             this.executionTime.AutoSize = true;
-            this.executionTime.Location = new System.Drawing.Point(743, 203);
+            this.executionTime.Location = new System.Drawing.Point(726, 211);
             this.executionTime.Name = "executionTime";
             this.executionTime.Size = new System.Drawing.Size(26, 13);
             this.executionTime.TabIndex = 4;
@@ -85,7 +86,7 @@
             // 
             // destinationDirectoryButton
             // 
-            this.destinationDirectoryButton.Location = new System.Drawing.Point(12, 80);
+            this.destinationDirectoryButton.Location = new System.Drawing.Point(12, 119);
             this.destinationDirectoryButton.Name = "destinationDirectoryButton";
             this.destinationDirectoryButton.Size = new System.Drawing.Size(155, 29);
             this.destinationDirectoryButton.TabIndex = 5;
@@ -95,7 +96,7 @@
             // 
             // destinationDirectory
             // 
-            this.destinationDirectory.Location = new System.Drawing.Point(173, 85);
+            this.destinationDirectory.Location = new System.Drawing.Point(173, 124);
             this.destinationDirectory.Name = "destinationDirectory";
             this.destinationDirectory.Size = new System.Drawing.Size(631, 20);
             this.destinationDirectory.TabIndex = 6;
@@ -104,7 +105,7 @@
             // TimerLabel
             // 
             this.TimerLabel.AutoSize = true;
-            this.TimerLabel.Location = new System.Drawing.Point(585, 203);
+            this.TimerLabel.Location = new System.Drawing.Point(565, 211);
             this.TimerLabel.Name = "TimerLabel";
             this.TimerLabel.Size = new System.Drawing.Size(83, 13);
             this.TimerLabel.TabIndex = 7;
@@ -171,7 +172,7 @@
             // addIntermodalAndSteelToInterstate
             // 
             this.addIntermodalAndSteelToInterstate.AutoSize = true;
-            this.addIntermodalAndSteelToInterstate.Location = new System.Drawing.Point(173, 121);
+            this.addIntermodalAndSteelToInterstate.Location = new System.Drawing.Point(173, 160);
             this.addIntermodalAndSteelToInterstate.Name = "addIntermodalAndSteelToInterstate";
             this.addIntermodalAndSteelToInterstate.Size = new System.Drawing.Size(234, 17);
             this.addIntermodalAndSteelToInterstate.TabIndex = 14;
@@ -179,11 +180,23 @@
             this.addIntermodalAndSteelToInterstate.UseVisualStyleBackColor = true;
             this.addIntermodalAndSteelToInterstate.CheckedChanged += new System.EventHandler(this.addIntermodalAndSteelToInterstate_CheckedChanged);
             // 
+            // UseSQLCommand
+            // 
+            this.UseSQLCommand.AutoSize = true;
+            this.UseSQLCommand.Location = new System.Drawing.Point(173, 64);
+            this.UseSQLCommand.Name = "UseSQLCommand";
+            this.UseSQLCommand.Size = new System.Drawing.Size(152, 17);
+            this.UseSQLCommand.TabIndex = 15;
+            this.UseSQLCommand.Text = "Access Data Automatically";
+            this.UseSQLCommand.UseVisualStyleBackColor = true;
+            this.UseSQLCommand.CheckedChanged += new System.EventHandler(this.AutoDataChecked);
+            // 
             // WagonMovementForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(823, 233);
+            this.Controls.Add(this.UseSQLCommand);
             this.Controls.Add(this.addIntermodalAndSteelToInterstate);
             this.Controls.Add(this.volumeModelFlag);
             this.Controls.Add(this.financialYear);
@@ -222,5 +235,6 @@
         private System.Windows.Forms.CheckBox financialYear;
         private System.Windows.Forms.CheckBox volumeModelFlag;
         private System.Windows.Forms.CheckBox addIntermodalAndSteelToInterstate;
+        private System.Windows.Forms.CheckBox UseSQLCommand;
     }
 }

@@ -27,7 +27,7 @@ namespace wagonMovement
         public const double minutesPerHour = 60;
         public const double secPerMinute = 60;
 
-        /* Volume Model flag. Set to true when volumes are required for teh volume model. */
+        /* Volume Model flag. Set to true when volumes are required for the volume model. */
         public bool volumeModel = false;
 
         /* The flag to identify whether to add the intermodal and steel commodities into the interstate commodity. */
@@ -37,6 +37,9 @@ namespace wagonMovement
         private int timeCounter = 0;
         private bool stopTheClock = false;
 
+        /// <summary>
+        /// Initialise the form
+        /// </summary>
         public WagonMovementForm()
         {
             InitializeComponent();
@@ -104,7 +107,11 @@ namespace wagonMovement
                 
                 /* Validate the data file and process the data. */
                 if (File.Exists(dataFile))
-                    Algorithm.processWagonMovements(dataFile, destination, fromDate, toDate, volumeModel, combineIntermodalAndSteel);
+                    Algorithm.processWagonMovements(dataFile, destination, fromDate, toDate, volumeModel, combineIntermodalAndSteel, false);
+
+                else if (UseSQLCommand.Checked)
+                    Algorithm.processWagonMovements("", destination, fromDate, toDate, volumeModel, combineIntermodalAndSteel, true);
+
 
             };
 
@@ -212,7 +219,7 @@ namespace wagonMovement
 
         /// <summary>
         /// Determine if the volume model flag has been ticked to indicate if the volume 
-        /// movements are required for teh volume model
+        /// movements are required for the volume model
         /// </summary>
         /// <param name="sender">The object container.</param>
         /// <param name="e">The event arguments.</param>
@@ -224,12 +231,45 @@ namespace wagonMovement
                 volumeModel = false;
         }
 
+        /// <summary>
+        /// Determine whether to combine the Steel and Intermodal traffic 
+        /// into a single Interstate traffic.
+        /// </summary>
+        /// <param name="sender">The object container.</param>
+        /// <param name="e">The event arguments</param>
         private void addIntermodalAndSteelToInterstate_CheckedChanged(object sender, EventArgs e)
         {
             if (addIntermodalAndSteelToInterstate.Checked)
                 combineIntermodalAndSteel = true;
             else
                 combineIntermodalAndSteel = false;
+        }
+
+        /// <summary>
+        /// Determine if the data is supplied by file or if the data should be 
+        /// accessed by SQL via the datawarehouse.
+        /// </summary>
+        /// <param name="sender">The object container.</param>
+        /// <param name="e">The event arguments</param>
+        private void AutoDataChecked(object sender, EventArgs e)
+        {
+            if (UseSQLCommand.Checked)
+            {
+                /* Disable the read data button */
+                wagonFile.Text = "Automatically acquire the data.";
+                wagonFile.ForeColor = SystemColors.InactiveCaptionText;
+                
+                /* Make sure the tool wont try to read a file instead of using SQL. */
+                dataFile = null;
+            }
+            else
+            {
+                /* Ensure the read data button is enabled  */
+                wagonFile.Text = "<Select a file>";
+                wagonFile.ForeColor = SystemColors.InactiveCaptionText;
+            }
+
+
         }
     }
 }

@@ -42,12 +42,12 @@ namespace wagonMovement
         /// Process the wagon movements into individual volume movements.
         /// </summary>
         /// <param name="filename">Filename of the wagon data.</param>
-        /// <param name="destinationFolder">The folder location to store teh result files.</param>
+        /// <param name="destinationFolder">The folder location to store the result files.</param>
         /// <param name="fromDate">The start date of the analysis period.</param>
         /// <param name="toDate">The end data of the analysis period.</param>
         /// <param name="volumeModel">A flag indicating which algorithm to use to combine the wagon movements.</param>
         /// <param name="combineIntermodalAndSteel">A flag indicating whether to combine intermodal and steel into a single commodity.</param>
-        public static void processWagonMovements(string filename, string destinationFolder, DateTime fromDate, DateTime toDate, bool volumeModel, bool combineIntermodalAndSteel)
+        public static void processWagonMovements(string filename, string destinationFolder, DateTime fromDate, DateTime toDate, bool volumeModel, bool combineIntermodalAndSteel, bool autoData = false)
         {
             /* Create the Wagon list. */
             List<wagonDetails> wagon = new List<wagonDetails>();
@@ -55,30 +55,21 @@ namespace wagonMovement
             /* Populate the wagon list with the data from the data file. */
             try
             {
-                //wagon = FileOperations.readWagonDataFile(filename, combineIntermodalAndSteel);
-                wagon = FileOperations.readAzureWagonDataFile(filename, combineIntermodalAndSteel);
+                if (autoData)
+                    wagon = FileOperations.readSQLWagonData(fromDate, toDate, combineIntermodalAndSteel);
+                else
+                    wagon = FileOperations.readAzureWagonDataFile(filename, combineIntermodalAndSteel);
 
                 /* Extract the data for the date range. */
                 wagon = wagon.Where(w => w.trainDate >= fromDate).Where(w => w.trainDate < toDate).ToList();
-
+                
                 if (wagon.Count() == 0)
                 {
                     Tools.messageBox("No wagons found. \nCheck the file and dates.");
                     return;
                 }
 
-                /* Remotely access the data warehouse and extract the data using SQL commands. */
-                //wagon = FileOperations.readSQLWagonData(fromDate, toDate, combineIntermodalAndSteel);
-
-                ///* Perform some simple validation on the SQL wagon data to ensure completeness. */
-                //if (!validateWagonsData(wagon, fromDate, toDate))
-                //{
-                //    Tools.messageBox("There was a validation error. \nCheck the SQL command.");
-                //    return;
-                //}
-
-
-
+                
             }
             catch (IOException exception)
             {
@@ -142,6 +133,7 @@ namespace wagonMovement
             /* search through all wagon movements */
             for (int recordIdx = 1; recordIdx < wagon.Count(); recordIdx++)
             {
+
                 /* Create a new volume movement */
                 volumeMovement item = new volumeMovement(wagon[recordIdx]);
 
@@ -841,34 +833,6 @@ namespace wagonMovement
         
         }
 
-        /// <summary>
-        /// Perform som esimple validation the SQL wagon data before fuirther processing.
-        /// </summary>
-        /// <param name="wagon">The results of wagon data from the SQL command.</param>
-        /// <param name="fromDate">The start date of the analysis.</param>
-        /// <param name="toDate">The end date of the analysis.</param>
-        /// <returns>True when all tests are successfull.</returns>
-        public static bool validateWagonsData(List<wagonDetails> wagon, DateTime fromDate, DateTime toDate)
-        {
-            /* Extract a list of counts of all wagon data for each day. */
-            var g = wagon.GroupBy(i => i.trainDate).OrderBy(group => group.Key);
-            
-            /* Calculate teh numebr of days beinf analysed. */
-            int days = (toDate - fromDate).Days;
-
-            /* Ensure there is a minimum number of data points for each day of analysis. */
-            foreach (var grp in g)
-                if (grp.Count() < minWagonPointsPerDay)
-                    return false;
-            
-            /* Make sure there is data for each day */
-            if (g.Count() - 1 == days)
-                return true;
-            else
-                return false;
-
-
-        }
 
     } // end of program class
 
